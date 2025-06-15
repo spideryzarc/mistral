@@ -266,6 +266,8 @@ def process_pdf_ocr():
         except Exception as e:
             # Adicionar falha ao relatório
             results.append(f"Falha ❌: {os.path.splitext(os.path.basename(pdf_path))[0]}")
+            results.append(str(e))
+
 
         progress_bar["value"] = i + 1
         progress_window.update()
