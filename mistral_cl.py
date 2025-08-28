@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
+"""
+Mistral PDF OCR Command Line Interface
+
+Interface de linha de comando para processamento de PDFs com OCR usando Mistral AI.
+"""
+
 import os
 import sys
 import glob
-from dotenv import load_dotenv
-from mistralai import Mistral
-import PyPDF2
-
-# Carrega variáveis de ambiente a partir do arquivo .env
-load_dotenv()
-
-# Configura o cliente Mistral com sua API key
-api_key = os.getenv("MISTRAL_API_KEY")
-client = Mistral(api_key=api_key)
+from mistral_core import get_decision_info, process_single_pdf, cleanup_mistral_files
 
 
 def choose_pdf_files():
@@ -46,17 +43,6 @@ def choose_pdf_files():
     return pdf_paths
 
 
-def get_pdf_page_count(pdf_path):
-    """Utiliza o PyPDF2 para contar as páginas de um PDF."""
-    try:
-        with open(pdf_path, "rb") as pdf_file:
-            reader = PyPDF2.PdfReader(pdf_file)
-            return len(reader.pages)
-    except Exception as e:
-        print(f"Erro ao ler PDF {pdf_path}: {e}")
-        return 0
-
-
 def confirm_override_simple():
     """
     Pergunta ao usuário uma única vez sobre como lidar com arquivos existentes.
@@ -81,27 +67,24 @@ def collect_user_choices(pdf_paths):
     """
     Decide automaticamente para todos os arquivos existentes com base em uma única pergunta inicial.
     """
-    # Verifica se há arquivos .md existentes
-    existing_md_files = [
-        os.path.splitext(pdf)[0] + '.md' for pdf in pdf_paths
-        if os.path.exists(os.path.splitext(pdf)[0] + '.md')
-    ]
-
-    decisions = []
+    info = get_decision_info(pdf_paths)
     override_decision = None
 
-    if existing_md_files:
+    # Verifica se há arquivos .md existentes
+    if info['existing_files']:
         # Pergunta uma única vez ao usuário
         override_decision = confirm_override_simple()
         if override_decision == 'abortar':
             print("\n❌ Operação abortada pelo usuário.\n")
             return None
 
-    for pdf_path in pdf_paths:
-        md_path = os.path.splitext(pdf_path)[0] + ".md"
-        page_count = get_pdf_page_count(pdf_path)
+    final_decisions = []
+    for decision in info['decisions']:
+        pdf_path = decision['pdf_path']
+        md_path = decision['md_path']
+        page_count = decision['page_count']
 
-        if os.path.exists(md_path):
+        if decision['exists']:
             if override_decision == 'sim_todos':
                 action = 'process'
             elif override_decision == 'nao_todos':
@@ -109,17 +92,18 @@ def collect_user_choices(pdf_paths):
         else:
             action = 'process'
 
-        decisions.append({
+        final_decisions.append({
             'pdf_path': pdf_path,
             'md_path': md_path,
             'page_count': page_count,
             'action': action
         })
 
-    return decisions
+    return final_decisions
 
 
 def process_pdf_ocr():
+    """Função principal do processamento via linha de comando."""
     # Passo 1: Selecionar PDFs (ou diretórios contendo PDFs) via argumentos da linha de comando
     pdf_paths = choose_pdf_files()
     if not pdf_paths:
@@ -157,52 +141,33 @@ def process_pdf_ocr():
     for i, item in enumerate(to_process, start=1):
         pdf_path = item['pdf_path']
         md_path = item['md_path']
+        
         print(f"\n🔄 [{i}/{total_files}] Processando '{pdf_path}'... 📂\n")
-        try:
-            with open(pdf_path, "rb") as pdf_file:
-                pdf_content = pdf_file.read()
-            uploaded_file = client.files.upload(
-                file={
-                    "file_name": os.path.basename(pdf_path),
-                    "content": pdf_content,
-                },
-                purpose="ocr",
-            )
-            signed_url = client.files.get_signed_url(file_id=uploaded_file.id, expiry=1)
-            response = client.ocr.process(
-                model="mistral-ocr-latest",
-                document={
-                    "type": "document_url",
-                    "document_url": signed_url.url
-                },
-                include_image_base64=False
-            )
-
-            if not hasattr(response, 'pages'):
-                raise ValueError("❌ O response não contém o atributo 'pages'.")
-            pages = response.pages
-            if not pages:
-                raise ValueError("⚠️ A lista de páginas está vazia.")
-
-            markdown_output = "# Resultado do OCR\n\n"
-            for page in pages:
-                if hasattr(page, 'markdown'):
-                    markdown_output += page.markdown.strip() + "\n\n"
-                else:
-                    print("Página sem atributo 'markdown'.\n")
-
-            with open(md_path, "w", encoding="utf-8") as md_file:
-                md_file.write(markdown_output)
-
-            results.append(f"✅ Sucesso: {os.path.splitext(os.path.basename(pdf_path))[0]}")
-        except Exception as e:
-            results.append(f"❌ Falha: {os.path.splitext(os.path.basename(pdf_path))[0]} - {str(e)}")
+        
+        success, message, images_count = process_single_pdf(pdf_path, md_path)
+        
+        if success:
+            image_info = f" ({images_count} imagens salvas)" if images_count > 0 else ""
+            results.append(f"✅ Sucesso: {os.path.splitext(os.path.basename(pdf_path))[0]}{image_info}")
+        else:
+            results.append(f"❌ Falha: {os.path.splitext(os.path.basename(pdf_path))[0]} - {message}")
+            
         print(f"✔️ Concluído: {i}/{total_files}\n")
 
     print("\n📋 Relatório final:\n")
     for result in results:
         print(result)
+    
+    # Fazer limpeza opcional de arquivos antigos no Mistral
+    if len(to_process) > 0:
+        print(f"\n🧹 Fazendo limpeza de arquivos antigos no serviço Mistral...")
+        cleanup_mistral_files(max_files_to_keep=5)
+
+
+def main():
+    """Função principal da interface de linha de comando."""
+    process_pdf_ocr()
 
 
 if __name__ == "__main__":
-    process_pdf_ocr()
+    main()

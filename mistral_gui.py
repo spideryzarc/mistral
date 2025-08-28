@@ -1,15 +1,14 @@
+#!/usr/bin/env python3
+"""
+Mistral PDF OCR GUI Interface
+
+Interface gráfica usando Tkinter para processamento de PDFs com OCR usando Mistral AI.
+"""
+
 import os
-from dotenv import load_dotenv
-from mistralai import Mistral
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
-import PyPDF2
-
-# Load environment variables from .env file
-load_dotenv()
-# Set up the Mistral client with your API key
-api_key = os.getenv("MISTRAL_API_KEY")
-client = Mistral(api_key=api_key)
+from mistral_core import get_decision_info, process_single_pdf, cleanup_mistral_files
 
 
 def choose_pdf_files():
@@ -20,18 +19,7 @@ def choose_pdf_files():
         title="Escolha um ou mais arquivos PDF",
         filetypes=[("PDF files", "*.pdf")]
     )
-    return list(pdf_paths)  # Retorna uma lista de caminhos
-
-
-def get_pdf_page_count(pdf_path):
-    """Usa PyPDF2 para contar páginas de um PDF."""
-    try:
-        with open(pdf_path, "rb") as pdf_file:
-            reader = PyPDF2.PdfReader(pdf_file)
-            return len(reader.pages)
-    except Exception as e:
-        print(f"Erro ao ler PDF {pdf_path}: {e}")
-        return 0
+    return list(pdf_paths)
 
 
 def confirm_override_custom(md_path):
@@ -43,10 +31,8 @@ def confirm_override_custom(md_path):
         'nao_todos'   -> Ignorar todos os próximos
         'cancelar'    -> Abortar tudo
     """
-    # Variável para armazenar a escolha final do usuário
     choice = [None]
 
-    # Handlers de clique para cada botão
     def on_yes():
         choice[0] = "sim"
         dialog.destroy()
@@ -105,29 +91,22 @@ def confirm_override_custom(md_path):
 def collect_user_choices(pdf_paths):
     """
     Fase 1: Realiza todas as interações com o usuário antes do processamento pesado.
-    Retorna uma lista de dicionários com informações para cada PDF:
-        [
-            {
-                'pdf_path': ...,
-                'md_path': ...,
-                'page_count': ...,
-                'action': 'process' ou 'skip'
-            },
-            ...
-        ]
+    Retorna uma lista de dicionários com informações para cada PDF.
     """
+    info = get_decision_info(pdf_paths)
     override_all_nao = False
-    decisions = []
+    final_decisions = []
 
-    for pdf_path in pdf_paths:
-        page_count = get_pdf_page_count(pdf_path)
-        md_path = pdf_path.rsplit('.', 1)[0] + ".md"
+    for decision in info['decisions']:
+        pdf_path = decision['pdf_path']
+        md_path = decision['md_path']
+        page_count = decision['page_count']
 
         # Se o .md já existe
-        if os.path.exists(md_path):
+        if decision['exists']:
             # Se "não para todos" já estiver ativo, pula direto
             if override_all_nao:
-                decisions.append({
+                final_decisions.append({
                     'pdf_path': pdf_path,
                     'md_path': md_path,
                     'page_count': page_count,
@@ -140,7 +119,7 @@ def collect_user_choices(pdf_paths):
             if resposta == 'sim':
                 pass  # Sobrescrever este
             elif resposta == 'nao':
-                decisions.append({
+                final_decisions.append({
                     'pdf_path': pdf_path,
                     'md_path': md_path,
                     'page_count': page_count,
@@ -149,7 +128,7 @@ def collect_user_choices(pdf_paths):
                 continue
             elif resposta == 'nao_todos':
                 override_all_nao = True
-                decisions.append({
+                final_decisions.append({
                     'pdf_path': pdf_path,
                     'md_path': md_path,
                     'page_count': page_count,
@@ -160,17 +139,18 @@ def collect_user_choices(pdf_paths):
                 return None
 
         # Se chegou aqui, não há .md ou usuário escolheu sobrescrever
-        decisions.append({
+        final_decisions.append({
             'pdf_path': pdf_path,
             'md_path': md_path,
             'page_count': page_count,
             'action': 'process'
         })
 
-    return decisions
+    return final_decisions
 
 
 def process_pdf_ocr():
+    """Função principal do processamento com interface gráfica."""
     # Passo 1: Escolher PDFs
     pdf_paths = choose_pdf_files()
     if not pdf_paths:
@@ -189,13 +169,13 @@ def process_pdf_ocr():
         print("Nenhum arquivo para processar. Encerrando.")
         return
 
-    # Calcular informações gerais (páginas e arquivo com mais páginas) apenas para os arquivos a serem processados
+    # Calcular informações gerais
     total_pages = sum(d['page_count'] for d in to_process)
     max_info = max(to_process, key=lambda d: d['page_count']) if to_process else None
     max_pages_file = os.path.splitext(os.path.basename(max_info['pdf_path']))[0] if max_info else ""
     max_pages = max_info['page_count'] if max_info else 0
 
-    # Perguntar se deseja prosseguir com base nas informações
+    # Perguntar se deseja prosseguir
     continuar = messagebox.askyesno(
         "Contagem de páginas 📄",
         f"Total de arquivos (a serem processados): {len(to_process)}\n"
@@ -221,58 +201,25 @@ def process_pdf_ocr():
     for i, item in enumerate(to_process):
         pdf_path = item['pdf_path']
         md_path = item['md_path']
-        try:
-            with open(pdf_path, "rb") as pdf_file:
-                pdf_content = pdf_file.read()
-            uploaded_file = client.files.upload(
-                file={
-                    "file_name": os.path.basename(pdf_path),
-                    "content": pdf_content,
-                },
-                purpose="ocr",
-            )
-            signed_url = client.files.get_signed_url(file_id=uploaded_file.id, expiry=1)
-
-            response = client.ocr.process(
-                model="mistral-ocr-latest",
-                document={
-                    "type": "document_url",
-                    "document_url": signed_url.url
-                },
-                include_image_base64=False
-            )
-
-            # Processar a resposta para gerar Markdown
-            if not hasattr(response, 'pages'):
-                raise ValueError("O response não contém o atributo 'pages'.")
-
-            pages = response.pages
-            if not pages:
-                raise ValueError("A lista de páginas está vazia.")
-
-            markdown_output = "# Resultado do OCR\n\n"
-            for page in pages:
-                if hasattr(page, 'markdown'):
-                    markdown_output += page.markdown.strip() + "\n\n"
-                else:
-                    print("Página sem atributo 'markdown'.")
-
-            with open(md_path, "w", encoding="utf-8") as md_file:
-                md_file.write(markdown_output)
-
-            # Adicionar sucesso ao relatório
-            results.append(f"Sucesso ✅: {os.path.splitext(os.path.basename(pdf_path))[0]}")
-
-        except Exception as e:
-            # Adicionar falha ao relatório
+        
+        success, message, images_count = process_single_pdf(pdf_path, md_path)
+        
+        if success:
+            image_info = f" ({images_count} imagens salvas)" if images_count > 0 else ""
+            results.append(f"Sucesso ✅: {os.path.splitext(os.path.basename(pdf_path))[0]}{image_info}")
+        else:
             results.append(f"Falha ❌: {os.path.splitext(os.path.basename(pdf_path))[0]}")
-            results.append(str(e))
-
+            results.append(message)
 
         progress_bar["value"] = i + 1
         progress_window.update()
 
     progress_window.destroy()
+
+    # Fazer limpeza opcional de arquivos antigos no Mistral
+    if len(to_process) > 0:
+        print(f"\n🧹 Fazendo limpeza de arquivos antigos no serviço Mistral...")
+        cleanup_mistral_files(max_files_to_keep=5)
 
     # Exibir relatório final
     report = "\n".join(results)
@@ -281,5 +228,10 @@ def process_pdf_ocr():
     messagebox.showinfo("Relatório Final ✅", f"Processamento concluído.\n\n{report}")
 
 
-if __name__ == "__main__":
+def main():
+    """Função principal da interface gráfica."""
     process_pdf_ocr()
+
+
+if __name__ == "__main__":
+    main()
