@@ -106,13 +106,14 @@ def fix_image_links_in_markdown(markdown_content, base_filename):
     return corrected_markdown
 
 
-def process_single_pdf(pdf_path, md_path):
+def process_single_pdf(pdf_path, md_path, save_images=True):
     """
-    Processa um único arquivo PDF, executando OCR e salvando imagens.
+    Processa um único arquivo PDF, executando OCR e opcionalmente salvando imagens.
     
     Args:
         pdf_path (str): Caminho para o arquivo PDF
         md_path (str): Caminho onde salvar o arquivo markdown
+        save_images (bool): Se True, salva as imagens extraídas. Se False, ignora as imagens.
     
     Returns:
         tuple: (success: bool, message: str, images_count: int)
@@ -142,7 +143,7 @@ def process_single_pdf(pdf_path, md_path):
                 "type": "document_url",
                 "document_url": signed_url.url
             },
-            include_image_base64=True
+            include_image_base64=save_images
         )
 
         if not hasattr(response, 'pages'):
@@ -152,8 +153,12 @@ def process_single_pdf(pdf_path, md_path):
         if not pages:
             raise ValueError("⚠️ A lista de páginas está vazia.")
 
-        # Processar e salvar imagens
-        saved_images = process_images_from_response(response, base_filename)
+        # Processar e salvar imagens (apenas se save_images for True)
+        saved_images = []
+        if save_images:
+            saved_images = process_images_from_response(response, base_filename)
+        else:
+            print(f"   🚫 Download de imagens ignorado conforme solicitado")
         
         # Gerar markdown
         markdown_output = "# Resultado do OCR\n\n"
@@ -163,8 +168,9 @@ def process_single_pdf(pdf_path, md_path):
             else:
                 print("Página sem atributo 'markdown'.\n")
 
-        # Corrigir os links das imagens no markdown
-        markdown_output = fix_image_links_in_markdown(markdown_output, base_filename)
+        # Corrigir os links das imagens no markdown (apenas se save_images for True)
+        if save_images:
+            markdown_output = fix_image_links_in_markdown(markdown_output, base_filename)
 
         # Salvar arquivo markdown
         with open(md_path, "w", encoding="utf-8") as md_file:

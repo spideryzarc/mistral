@@ -15,13 +15,20 @@ def choose_pdf_files():
     """
     Recebe os argumentos da linha de comando. Se algum argumento for um diretório,
     seleciona automaticamente todos os arquivos PDF contidos nele.
+    Também verifica se a opção --no-images foi passada.
     """
     pdf_paths = []
     args = sys.argv[1:]
+    skip_images = False
 
-    if not args:
-        print("Nenhum caminho fornecido.\nUso:\n  python mistral_cl.py arquivo.pdf ou diretorio/")
-        sys.exit(1)
+    if not args or '--help' in args or '-h' in args:
+        print_help()
+        sys.exit(0)
+
+    # Verifica se --no-images foi passado como argumento
+    if '--no-images' in args:
+        skip_images = True
+        args.remove('--no-images')
 
     for path in args:
         if os.path.isdir(path):
@@ -40,7 +47,38 @@ def choose_pdf_files():
         print("Nenhum arquivo PDF válido foi encontrado.")
         sys.exit(1)
 
-    return pdf_paths
+    return pdf_paths, skip_images
+
+
+def print_help():
+    """Exibe a ajuda do programa."""
+    print("""
+Mistral PDF OCR - Interface de Linha de Comando
+
+USO:
+    python mistral_cl.py <arquivo.pdf|diretorio> [opções]
+
+ARGUMENTOS:
+    arquivo.pdf     Caminho para um arquivo PDF
+    diretorio/      Caminho para um diretório contendo arquivos PDF
+
+OPÇÕES:
+    --no-images     Processa apenas o texto OCR, ignorando download de imagens
+    --help, -h      Exibe esta mensagem de ajuda
+
+EXEMPLOS:
+    python mistral_cl.py documento.pdf
+    python mistral_cl.py /caminho/para/pasta/
+    python mistral_cl.py arquivo1.pdf arquivo2.pdf pasta/
+    python mistral_cl.py documento.pdf --no-images
+    python mistral_cl.py /pasta/com/pdfs/ --no-images
+
+SAÍDA:
+    documento.md         - Texto extraído via OCR em formato Markdown
+    documento_01.jpeg    - Primeira imagem extraída (se --no-images não for usado)
+    documento_02.jpeg    - Segunda imagem extraída (se --no-images não for usado)
+    etc.
+""")
 
 
 def confirm_override_simple():
@@ -105,10 +143,13 @@ def collect_user_choices(pdf_paths):
 def process_pdf_ocr():
     """Função principal do processamento via linha de comando."""
     # Passo 1: Selecionar PDFs (ou diretórios contendo PDFs) via argumentos da linha de comando
-    pdf_paths = choose_pdf_files()
+    pdf_paths, skip_images = choose_pdf_files()
     if not pdf_paths:
         print("Nenhum arquivo selecionado. Encerrando.")
         return
+
+    if skip_images:
+        print("🚫 Opção --no-images detectada: as imagens serão ignoradas durante o processamento.\n")
 
     # Passo 2: Coleta das decisões do usuário para cada arquivo
     decisions = collect_user_choices(pdf_paths)
@@ -144,11 +185,14 @@ def process_pdf_ocr():
         
         print(f"\n🔄 [{i}/{total_files}] Processando '{pdf_path}'... 📂\n")
         
-        success, message, images_count = process_single_pdf(pdf_path, md_path)
+        success, message, images_count = process_single_pdf(pdf_path, md_path, save_images=not skip_images)
         
         if success:
-            image_info = f" ({images_count} imagens salvas)" if images_count > 0 else ""
-            results.append(f"✅ Sucesso: {os.path.splitext(os.path.basename(pdf_path))[0]}{image_info}")
+            if skip_images:
+                results.append(f"✅ Sucesso: {os.path.splitext(os.path.basename(pdf_path))[0]} (sem imagens)")
+            else:
+                image_info = f" ({images_count} imagens salvas)" if images_count > 0 else ""
+                results.append(f"✅ Sucesso: {os.path.splitext(os.path.basename(pdf_path))[0]}{image_info}")
         else:
             results.append(f"❌ Falha: {os.path.splitext(os.path.basename(pdf_path))[0]} - {message}")
             
