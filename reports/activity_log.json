@@ -41,5 +41,15 @@
     ],
     "status": "success",
     "notes": "NiceGUI roda em http://localhost:8080. Backup do código Tkinter salvo em mistral_gui_tkinter.py.bak. Não requer mais python3-tk do sistema."
+  },
+  {
+    "date": "2026-02-02T19:30:00",
+    "objective": "Corrigir bug de upload na interface NiceGUI",
+    "result": "Corrigido AttributeError no handler de upload - atualizada API de e.files para e.name/e.content; alterado diretório temporário de /tmp para temp_uploads (compatibilidade Windows)",
+    "changed_files": [
+      "c:/Users/spideryzarc/projetos/mistral/mistral_gui.py"
+    ],
+    "status": "success",
+    "notes": "API da NiceGUI mudou - UploadEventArguments não tem mais atributo 'files', usa 'name' e 'content' diretamente"
   }
 ]

@@ -116,3 +116,6 @@ dmypy.json
 # VSCode
 .vscode/
 
+# Temporary uploads
+temp_uploads/
+
