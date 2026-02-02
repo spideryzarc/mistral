@@ -51,5 +51,37 @@
     ],
     "status": "success",
     "notes": "API da NiceGUI mudou - UploadEventArguments não tem mais atributo 'files', usa 'name' e 'content' diretamente"
+  },
+  {
+    "date": "2026-02-02T19:35:00",
+    "objective": "Implementar servidor MCP para integração nativa com agentes de IA",
+    "result": "Criado servidor MCP completo com 5 ferramentas (process_pdf, process_directory, get_pdf_info, list_mistral_files, cleanup_mistral_files); adicionados MCP_README.md, test_mcp_server.py, e mcp_config.json; documentação atualizada",
+    "changed_files": [
+      "c:/Users/spideryzarc/projetos/mistral/mistral_mcp_server.py",
+      "c:/Users/spideryzarc/projetos/mistral/MCP_README.md",
+      "c:/Users/spideryzarc/projetos/mistral/test_mcp_server.py",
+      "c:/Users/spideryzarc/projetos/mistral/mcp_config.json",
+      "c:/Users/spideryzarc/projetos/mistral/README.md",
+      "c:/Users/spideryzarc/projetos/mistral/.gitignore"
+    ],
+    "status": "success",
+    "notes": "Servidor compatível com Claude Desktop, Cursor, Continue.dev e outros clientes MCP; testes validados com sucesso"
+  },
+  {
+    "date": "2026-02-02T20:03:24",
+    "objective": "Complete internationalization of the project to English",
+    "result": "Translated all Python files, README.md, and documentation from Portuguese to English; MCP server fully operational; all tests passing",
+    "changed_files": [
+      "c:/Users/spideryzarc/projetos/mistral/mistral_core.py",
+      "c:/Users/spideryzarc/projetos/mistral/mistral_mcp_server.py",
+      "c:/Users/spideryzarc/projetos/mistral/test_mcp_server.py",
+      "c:/Users/spideryzarc/projetos/mistral/mistral_utils.py",
+      "c:/Users/spideryzarc/projetos/mistral/mistral_cl.py",
+      "c:/Users/spideryzarc/projetos/mistral/mistral_gui.py",
+      "c:/Users/spideryzarc/projetos/mistral/README.md",
+      "c:/Users/spideryzarc/.gemini/antigravity/mcp_config.json"
+    ],
+    "status": "success",
+    "notes": "Full i18n transformation: code comments, docstrings, user messages, CLI prompts, GUI labels, and documentation now in English; project ready for international use"
   }
 ]

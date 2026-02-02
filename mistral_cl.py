@@ -2,7 +2,7 @@
 """
 Mistral PDF OCR Command Line Interface
 
-Interface de linha de comando para processamento de PDFs com OCR usando Mistral AI.
+Command line interface for PDF processing with OCR using Mistral AI.
 """
 
 import os
@@ -13,9 +13,9 @@ from mistral_core import get_decision_info, process_single_pdf, cleanup_mistral_
 
 def choose_pdf_files():
     """
-    Recebe os argumentos da linha de comando. Se algum argumento for um diretório,
-    seleciona automaticamente todos os arquivos PDF contidos nele.
-    Também verifica se a opção --no-images foi passada.
+    Receives command line arguments. If any argument is a directory,
+    automatically selects all PDF files contained in it.
+    Also checks if --no-images option was passed.
     """
     pdf_paths = []
     args = sys.argv[1:]
@@ -25,95 +25,95 @@ def choose_pdf_files():
         print_help()
         sys.exit(0)
 
-    # Verifica se --no-images foi passado como argumento
+    # Check if --no-images was passed as argument
     if '--no-images' in args:
         skip_images = True
         args.remove('--no-images')
 
     for path in args:
         if os.path.isdir(path):
-            # Seleciona todos os PDFs no diretório fornecido
+            # Select all PDFs in the provided directory
             dir_pdfs = glob.glob(os.path.join(path, '*.pdf'))
             if dir_pdfs:
                 pdf_paths.extend(dir_pdfs)
             else:
-                print(f"Nenhum arquivo PDF encontrado no diretório '{path}'.")
+                print(f"No PDF files found in directory '{path}'.")
         elif os.path.isfile(path) and path.lower().endswith('.pdf'):
             pdf_paths.append(path)
         else:
-            print(f"Caminho inválido ou arquivo não-PDF ignorado: '{path}'")
+            print(f"Invalid path or non-PDF file ignored: '{path}'")
 
     if not pdf_paths:
-        print("Nenhum arquivo PDF válido foi encontrado.")
+        print("No valid PDF files were found.")
         sys.exit(1)
 
     return pdf_paths, skip_images
 
 
 def print_help():
-    """Exibe a ajuda do programa."""
+    """Displays program help."""
     print("""
-Mistral PDF OCR - Interface de Linha de Comando
+Mistral PDF OCR - Command Line Interface
 
-USO:
-    python mistral_cl.py <arquivo.pdf|diretorio> [opções]
+USAGE:
+    python mistral_cl.py <file.pdf|directory> [options]
 
-ARGUMENTOS:
-    arquivo.pdf     Caminho para um arquivo PDF
-    diretorio/      Caminho para um diretório contendo arquivos PDF
+ARGUMENTS:
+    file.pdf        Path to a PDF file
+    directory/      Path to a directory containing PDF files
 
-OPÇÕES:
-    --no-images     Processa apenas o texto OCR, ignorando download de imagens
-    --help, -h      Exibe esta mensagem de ajuda
+OPTIONS:
+    --no-images     Process only OCR text, ignoring image downloads
+    --help, -h      Display this help message
 
-EXEMPLOS:
-    python mistral_cl.py documento.pdf
-    python mistral_cl.py /caminho/para/pasta/
-    python mistral_cl.py arquivo1.pdf arquivo2.pdf pasta/
-    python mistral_cl.py documento.pdf --no-images
-    python mistral_cl.py /pasta/com/pdfs/ --no-images
+EXAMPLES:
+    python mistral_cl.py document.pdf
+    python mistral_cl.py /path/to/folder/
+    python mistral_cl.py file1.pdf file2.pdf folder/
+    python mistral_cl.py document.pdf --no-images
+    python mistral_cl.py /folder/with/pdfs/ --no-images
 
-SAÍDA:
-    documento.md         - Texto extraído via OCR em formato Markdown
-    documento_01.jpeg    - Primeira imagem extraída (se --no-images não for usado)
-    documento_02.jpeg    - Segunda imagem extraída (se --no-images não for usado)
+OUTPUT:
+    document.md         - Text extracted via OCR in Markdown format
+    document_01.jpeg    - First extracted image (if --no-images not used)
+    document_02.jpeg    - Second extracted image (if --no-images not used)
     etc.
 """)
 
 
 def confirm_override_simple():
     """
-    Pergunta ao usuário uma única vez sobre como lidar com arquivos existentes.
+    Asks the user once about how to handle existing files.
     """
     while True:
-        resposta = input(
-            "\n❓ Alguns arquivos '.md' já existem. Deseja sobrescrever?\n"
-            "(s)im para todos, (N)ão para todos, (a)bortar: "
+        response = input(
+            "\n❓ Some '.md' files already exist. Do you want to overwrite?\n"
+            "(y)es for all, (N)o for all, (a)bort: "
         ).lower().strip()
 
-        if resposta in ['s', 'sim']:
-            return 'sim_todos'
-        elif resposta in ['', 'n', 'nao', 'não']:
-            return 'nao_todos'
-        elif resposta in ['a', 'abortar']:
-            return 'abortar'
+        if response in ['y', 'yes']:
+            return 'yes_all'
+        elif response in ['', 'n', 'no']:
+            return 'no_all'
+        elif response in ['a', 'abort']:
+            return 'abort'
         else:
-            print("\n⚠️ Resposta inválida. Digite 's', 'n' ou 'a'.\n")
+            print("\n⚠️ Invalid response. Type 'y', 'n' or 'a'.\n")
 
 
 def collect_user_choices(pdf_paths):
     """
-    Decide automaticamente para todos os arquivos existentes com base em uma única pergunta inicial.
+    Automatically decides for all existing files based on a single initial question.
     """
     info = get_decision_info(pdf_paths)
     override_decision = None
 
-    # Verifica se há arquivos .md existentes
+    # Check if there are existing .md files
     if info['existing_files']:
-        # Pergunta uma única vez ao usuário
+        # Ask user once
         override_decision = confirm_override_simple()
-        if override_decision == 'abortar':
-            print("\n❌ Operação abortada pelo usuário.\n")
+        if override_decision == 'abort':
+            print("\n❌ Operation aborted by user.\n")
             return None
 
     final_decisions = []
@@ -123,9 +123,9 @@ def collect_user_choices(pdf_paths):
         page_count = decision['page_count']
 
         if decision['exists']:
-            if override_decision == 'sim_todos':
+            if override_decision == 'yes_all':
                 action = 'process'
-            elif override_decision == 'nao_todos':
+            elif override_decision == 'no_all':
                 action = 'skip'
         else:
             action = 'process'
@@ -141,40 +141,42 @@ def collect_user_choices(pdf_paths):
 
 
 def process_pdf_ocr():
-    """Função principal do processamento via linha de comando."""
-    # Passo 1: Selecionar PDFs (ou diretórios contendo PDFs) via argumentos da linha de comando
+    """Main function for command line processing."""
+    # Step 1: Select PDFs (or directories containing PDFs) via command line arguments
     pdf_paths, skip_images = choose_pdf_files()
     if not pdf_paths:
-        print("Nenhum arquivo selecionado. Encerrando.")
+        print("No files selected. Exiting.")
         return
 
     if skip_images:
-        print("🚫 Opção --no-images detectada: as imagens serão ignoradas durante o processamento.\n")
+        print("🚫 --no-images option detected: images will be ignored during processing.\n")
 
-    # Passo 2: Coleta das decisões do usuário para cada arquivo
+    # Step 2: Collect user decisions for each file
     decisions = collect_user_choices(pdf_paths)
     if decisions is None:
-        print("Operação cancelada ao escolher sobrescritas. Encerrando.")
+        print("Operation cancelled when choosing overwrites. Exiting.")
         return
 
-    # Filtrar apenas os arquivos que o usuário decidiu processar
+    # Filter only files the user decided to process
     to_process = [d for d in decisions if d['action'] == 'process']
     if not to_process:
-        print("\n⚠️  Nenhum arquivo para processar. Encerrando. ❌\n")
+        print("\n⚠️  No files to process. Exiting. ❌\n")
         return
 
     total_pages = sum(d['page_count'] for d in to_process)
     max_info = max(to_process, key=lambda d: d['page_count'])
-    max_pages_file = os.path.splitext(os.path.basename(max_info['pdf_path']))[0]
+    max_pages_file = os.path.splitext(
+        os.path.basename(max_info['pdf_path']))[0]
     max_pages = max_info['page_count']
 
-    print(f"\n📄 Total de arquivos (a serem processados): {len(to_process)}")
-    print(f"📘 Arquivo com mais páginas: {max_pages_file} ({max_pages} páginas)")
-    print(f"📊 Total de páginas: {total_pages}\n")
+    print(f"\n📄 Total files (to be processed): {len(to_process)}")
+    print(f"📘 File with most pages: {max_pages_file} ({max_pages} pages)")
+    print(f"📊 Total pages: {total_pages}\n")
 
-    continuar = input("❓ Deseja prosseguir com o OCR? (s/N): ").lower().strip() in ['s', 'sim']
-    if not continuar:
-        print("\n❌ Operação cancelada pelo usuário antes do processamento. Encerrando.\n")
+    continue_processing = input(
+        "❓ Do you want to proceed with OCR? (y/N): ").lower().strip() in ['y', 'yes']
+    if not continue_processing:
+        print("\n❌ Operation cancelled by user before processing. Exiting.\n")
         return
 
     results = []
@@ -182,34 +184,38 @@ def process_pdf_ocr():
     for i, item in enumerate(to_process, start=1):
         pdf_path = item['pdf_path']
         md_path = item['md_path']
-        
-        print(f"\n🔄 [{i}/{total_files}] Processando '{pdf_path}'... 📂\n")
-        
-        success, message, images_count = process_single_pdf(pdf_path, md_path, save_images=not skip_images)
-        
+
+        print(f"\n🔄 [{i}/{total_files}] Processing '{pdf_path}'... 📂\n")
+
+        success, message, images_count = process_single_pdf(
+            pdf_path, md_path, save_images=not skip_images)
+
         if success:
             if skip_images:
-                results.append(f"✅ Sucesso: {os.path.splitext(os.path.basename(pdf_path))[0]} (sem imagens)")
+                results.append(
+                    f"✅ Success: {os.path.splitext(os.path.basename(pdf_path))[0]} (no images)")
             else:
-                image_info = f" ({images_count} imagens salvas)" if images_count > 0 else ""
-                results.append(f"✅ Sucesso: {os.path.splitext(os.path.basename(pdf_path))[0]}{image_info}")
+                image_info = f" ({images_count} images saved)" if images_count > 0 else ""
+                results.append(
+                    f"✅ Success: {os.path.splitext(os.path.basename(pdf_path))[0]}{image_info}")
         else:
-            results.append(f"❌ Falha: {os.path.splitext(os.path.basename(pdf_path))[0]} - {message}")
-            
-        print(f"✔️ Concluído: {i}/{total_files}\n")
+            results.append(
+                f"❌ Failed: {os.path.splitext(os.path.basename(pdf_path))[0]} - {message}")
 
-    print("\n📋 Relatório final:\n")
+        print(f"✔️ Completed: {i}/{total_files}\n")
+
+    print("\n📋 Final report:\n")
     for result in results:
         print(result)
-    
-    # Fazer limpeza opcional de arquivos antigos no Mistral
+
+    # Optional cleanup of old files in Mistral
     if len(to_process) > 0:
-        print(f"\n🧹 Fazendo limpeza de arquivos antigos no serviço Mistral...")
+        print(f"\n🧹 Cleaning old files from Mistral service...")
         cleanup_mistral_files(max_files_to_keep=5)
 
 
 def main():
-    """Função principal da interface de linha de comando."""
+    """Main command line interface function."""
     process_pdf_ocr()
 
 

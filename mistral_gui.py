@@ -2,7 +2,7 @@
 """
 Mistral PDF OCR GUI Interface - NiceGUI
 
-Interface gráfica moderna usando NiceGUI para processamento de PDFs com OCR usando Mistral AI.
+Modern graphical interface using NiceGUI for PDF processing with OCR using Mistral AI.
 """
 
 import os
@@ -11,14 +11,14 @@ from nicegui import ui, app
 from mistral_core import get_decision_info, process_single_pdf, cleanup_mistral_files
 
 
-# Variáveis globais para manter estado
+# Global variables to maintain state
 selected_files = []
 processing_decisions = []
 skip_images = False
 
 
 def reset_state():
-    """Reseta o estado global"""
+    """Resets global state"""
     global selected_files, processing_decisions, skip_images
     selected_files = []
     processing_decisions = []
@@ -26,14 +26,14 @@ def reset_state():
 
 
 async def handle_file_upload(e):
-    """Processa arquivos enviados via upload"""
+    """Processes files uploaded via upload"""
     global selected_files
 
-    # Salva os arquivos temporariamente
+    # Save files temporarily
     temp_dir = Path('temp_uploads')
     temp_dir.mkdir(exist_ok=True)
 
-    # Na NiceGUI, o evento tem o arquivo diretamente (e.name, e.content)
+    # In NiceGUI, the event has the file directly (e.name, e.content)
     if e.name.lower().endswith('.pdf'):
         file_path = temp_dir / e.name
         file_path.write_bytes(e.content.read())
@@ -42,7 +42,7 @@ async def handle_file_upload(e):
     if selected_files:
         file_list.clear()
         with file_list:
-            ui.label(f'📁 {len(selected_files)} arquivo(s) selecionado(s):').classes(
+            ui.label(f'📁 {len(selected_files)} file(s) selected:').classes(
                 'text-h6 text-green')
             for f in selected_files:
                 ui.label(f'  • {Path(f).name}').classes('text-body2')
@@ -51,46 +51,47 @@ async def handle_file_upload(e):
         file_info_card.set_visibility(True)
         await show_file_info()
     else:
-        ui.notify('Nenhum arquivo PDF selecionado!', type='warning')
+        ui.notify('No PDF files selected!', type='warning')
 
 
 async def show_file_info():
-    """Mostra informações sobre os arquivos selecionados"""
+    """Shows information about selected files"""
     info = get_decision_info(selected_files)
 
     file_info_card.clear()
     with file_info_card:
-        ui.markdown('### 📊 Informações dos Arquivos').classes('text-primary')
+        ui.markdown('### 📊 File Information').classes('text-primary')
 
         if info['existing_files']:
             ui.markdown(
-                f"**⚠️ Arquivos .md existentes:** {len(info['existing_files'])}")
+                f"**⚠️ Existing .md files:** {len(info['existing_files'])}")
 
             with ui.row().classes('w-full gap-2'):
-                ui.label('Como deseja proceder?').classes('text-subtitle1')
+                ui.label('How would you like to proceed?').classes(
+                    'text-subtitle1')
 
             with ui.row().classes('w-full gap-2'):
-                ui.button('Sobrescrever Todos',
-                          on_click=lambda: set_override_decision('sim_todos'),
+                ui.button('Overwrite All',
+                          on_click=lambda: set_override_decision('yes_all'),
                           icon='check_circle').props('color=positive')
-                ui.button('Ignorar Todos',
-                          on_click=lambda: set_override_decision('nao_todos'),
+                ui.button('Skip All',
+                          on_click=lambda: set_override_decision('no_all'),
                           icon='cancel').props('color=warning')
 
-        ui.markdown(f"**📄 Total de PDFs:** {len(selected_files)}")
+        ui.markdown(f"**📄 Total PDFs:** {len(selected_files)}")
 
         total_pages = sum(d['page_count'] for d in info['decisions'])
         max_info = max(
             info['decisions'], key=lambda d: d['page_count']) if info['decisions'] else None
 
         if max_info:
-            ui.markdown(f"**📚 Total de páginas:** {total_pages}")
+            ui.markdown(f"**📚 Total pages:** {total_pages}")
             ui.markdown(
-                f"**📖 Arquivo com mais páginas:** {Path(max_info['pdf_path']).stem} ({max_info['page_count']} páginas)")
+                f"**📖 File with most pages:** {Path(max_info['pdf_path']).stem} ({max_info['page_count']} pages)")
 
 
 def set_override_decision(decision):
-    """Define a decisão de sobrescrita"""
+    """Sets overwrite decision"""
     global processing_decisions
 
     info = get_decision_info(selected_files)
@@ -98,7 +99,7 @@ def set_override_decision(decision):
 
     for d in info['decisions']:
         if d['exists']:
-            action = 'process' if decision == 'sim_todos' else 'skip'
+            action = 'process' if decision == 'yes_all' else 'skip'
         else:
             action = 'process'
 
@@ -109,15 +110,15 @@ def set_override_decision(decision):
             'action': action
         })
 
-    ui.notify(f'✅ Decisão salva: {decision}', type='positive')
+    ui.notify(f'✅ Decision saved: {decision}', type='positive')
     start_processing_button.set_visibility(True)
 
 
 async def start_processing():
-    """Inicia o processamento dos PDFs"""
+    """Starts PDF processing"""
     global processing_decisions, skip_images
 
-    # Se não há decisões, cria com base nos arquivos selecionados
+    # If there are no decisions, create based on selected files
     if not processing_decisions:
         info = get_decision_info(selected_files)
         processing_decisions = [
@@ -133,19 +134,19 @@ async def start_processing():
     to_process = [d for d in processing_decisions if d['action'] == 'process']
 
     if not to_process:
-        ui.notify('Nenhum arquivo para processar!', type='warning')
+        ui.notify('No files to process!', type='warning')
         return
 
-    # Mostra área de progresso
+    # Show progress area
     progress_card.set_visibility(True)
     progress_card.clear()
 
     with progress_card:
-        ui.markdown('### 🔄 Processando...').classes('text-primary')
+        ui.markdown('### 🔄 Processing...').classes('text-primary')
         progress_bar = ui.linear_progress(
             show_value=True).props('size=30px color=primary')
         status_label = ui.label(
-            'Iniciando processamento...').classes('text-subtitle1')
+            'Starting processing...').classes('text-subtitle1')
 
     results = []
     total = len(to_process)
@@ -154,111 +155,111 @@ async def start_processing():
         pdf_path = item['pdf_path']
         md_path = item['md_path']
 
-        # Atualiza progresso
+        # Update progress
         progress = (i / total) * 100
         progress_bar.value = progress / 100
-        status_label.text = f'[{i+1}/{total}] Processando {Path(pdf_path).name}...'
+        status_label.text = f'[{i+1}/{total}] Processing {Path(pdf_path).name}...'
 
-        # Processa o PDF
+        # Process PDF
         success, message, images_count = process_single_pdf(
             pdf_path, md_path, save_images=not skip_images)
 
         if success:
             if skip_images:
-                results.append(f'✅ {Path(pdf_path).stem} (sem imagens)')
+                results.append(f'✅ {Path(pdf_path).stem} (no images)')
             else:
-                image_info = f' ({images_count} imagens)' if images_count > 0 else ''
+                image_info = f' ({images_count} images)' if images_count > 0 else ''
                 results.append(f'✅ {Path(pdf_path).stem}{image_info}')
         else:
             results.append(f'❌ {Path(pdf_path).stem} - {message}')
 
-    # Completa progresso
+    # Complete progress
     progress_bar.value = 1.0
-    status_label.text = '✅ Processamento concluído!'
+    status_label.text = '✅ Processing completed!'
 
-    # Limpeza de arquivos remotos
+    # Remote file cleanup
     if len(to_process) > 0:
-        ui.notify('🧹 Limpando arquivos antigos no Mistral...', type='info')
+        ui.notify('🧹 Cleaning old files in Mistral...', type='info')
         cleanup_mistral_files(max_files_to_keep=5)
 
-    # Mostra relatório
+    # Show report
     report_card.set_visibility(True)
     report_card.clear()
     with report_card:
-        ui.markdown('### 📋 Relatório Final').classes('text-primary')
+        ui.markdown('### 📋 Final Report').classes('text-primary')
         for result in results:
             if '✅' in result:
                 ui.label(result).classes('text-positive text-body1')
             else:
                 ui.label(result).classes('text-negative text-body1')
 
-    ui.notify('✅ Processamento concluído com sucesso!', type='positive')
+    ui.notify('✅ Processing completed successfully!', type='positive')
 
-    # Botão para processar novos arquivos
+    # Button to process new files
     with report_card:
-        ui.button('Processar Novos Arquivos',
+        ui.button('Process New Files',
                   on_click=lambda: (reset_state(), ui.navigate.to('/')),
                   icon='refresh').props('color=primary').classes('mt-4')
 
 
-# Interface NiceGUI
+# NiceGUI Interface
 @ui.page('/')
 def main_page():
-    """Página principal da interface"""
+    """Main interface page"""
     global file_list, file_info_card, process_button, start_processing_button
     global progress_card, report_card
 
     # Header
     with ui.header().classes('items-center justify-between bg-primary'):
         ui.label('Mistral PDF OCR').classes('text-h4')
-        ui.label('Extração de texto e imagens com IA').classes(
+        ui.label('AI-powered text and image extraction').classes(
             'text-subtitle1')
 
-    # Container principal
+    # Main container
     with ui.column().classes('w-full max-w-4xl mx-auto p-4 gap-4'):
 
-        # Card de upload
+        # Upload card
         with ui.card().classes('w-full'):
-            ui.markdown('## 📤 Selecione os Arquivos PDF').classes(
+            ui.markdown('## 📤 Select PDF Files').classes(
                 'text-h5 text-primary')
 
             ui.upload(
-                label='Arraste arquivos PDF aqui ou clique para selecionar',
+                label='Drag PDF files here or click to select',
                 multiple=True,
                 auto_upload=True,
                 on_upload=handle_file_upload,
                 on_rejected=lambda: ui.notify(
-                    'Apenas arquivos PDF são aceitos!', type='warning')
+                    'Only PDF files are accepted!', type='warning')
             ).props('accept=.pdf color=primary').classes('w-full')
 
-            ui.checkbox('Modo somente texto (ignorar imagens)',
+            ui.checkbox('Text-only mode (skip images)',
                         value=skip_images,
                         on_change=lambda e: globals().update({'skip_images': e.value}))
 
-        # Lista de arquivos selecionados
+        # Selected files list
         file_list = ui.column().classes('w-full')
 
-        # Card com informações dos arquivos
+        # File information card
         file_info_card = ui.card().classes('w-full')
         file_info_card.set_visibility(False)
 
-        # Botão de processar (alternativo se não houver decisões)
-        process_button = ui.button('Processar Arquivos',
+        # Process button (alternative if no decisions)
+        process_button = ui.button('Process Files',
                                    on_click=start_processing,
                                    icon='play_arrow').props('color=positive size=lg').classes('w-full')
         process_button.disable()
 
-        # Botão de iniciar processamento (após decisões)
-        start_processing_button = ui.button('Iniciar Processamento',
+        # Start processing button (after decisions)
+        start_processing_button = ui.button('Start Processing',
                                             on_click=start_processing,
                                             icon='rocket_launch').props('color=positive size=lg').classes('w-full')
         start_processing_button.set_visibility(False)
 
-        # Card de progresso
+        # Progress card
         progress_card = ui.card().classes('w-full')
         progress_card.set_visibility(False)
 
-        # Card de relatório
+        # Report card
         report_card = ui.card().classes('w-full')
         report_card.set_visibility(False)
 
@@ -268,7 +269,7 @@ def main_page():
 
 
 def main():
-    """Função principal"""
+    """Main function"""
     ui.run(
         title='Mistral PDF OCR',
         favicon='📄',

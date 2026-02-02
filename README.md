@@ -1,206 +1,308 @@
 # Mistral PDF OCR Application
 
-Uma aplicação Python para processamento de arquivos PDF usando as capacidades de OCR da Mistral AI, com extração automática de imagens e gerenciamento de arquivos.
+A Python application for processing PDF files using Mistral AI's OCR capabilities, with automatic image extraction and file management.
 
-## Funcionalidades
+## Features
 
-- 📄 **Extração de texto via OCR** - Processamento de texto de PDFs usando a API Mistral AI
-- 🖼️ **Extração automática de imagens** - Download e salvamento de imagens em formato JPEG
-- 🖥️ **Dupla interface** - GUI web moderna (NiceGUI) e CLI para automação
-- 📊 **Acompanhamento em tempo real** - Barra de progresso e relatórios detalhados
-- 🧹 **Limpeza automática** - Gerenciamento de arquivos no serviço Mistral com remoção de uploads antigos
-- 🔧 **Utilitário standalone** - Ferramenta independente para listar e limpar arquivos remotos
-- ⚠️ **Tratamento robusto de erros** - Validação de caminhos, contagem de páginas e controle de sobrescrita
-- 🎯 **Processamento em lote** - Suporte para múltiplos PDFs e diretórios completos
-- 🚫 **Modo somente texto** - Opção `--no-images` para ignorar download de imagens
+- 📄 **Text extraction via OCR** - Process text from PDFs using Mistral AI API
+- 🖼️ **Automatic image extraction** - Download and save images in JPEG format
+- 🖥️ **Triple interface** - Modern web GUI (NiceGUI), CLI for automation, and MCP server for AI agents
+- 📊 **Real-time tracking** - Progress bar and detailed reports
+- 🧹 **Automatic cleanup** - File management on Mistral service with old upload removal
+- 🔧 **Standalone utility** - Independent tool to list and clean remote files
+- ⚠️ **Robust error handling** - Path validation, page counting, and overwrite control
+- 🎯 **Batch processing** - Support for multiple PDFs and complete directories
+- 🚫 **Text-only mode** - `--no-images` option to skip image downloads
+- 🤖 **MCP Server** - Protocol for native integration with AI agents (Claude, Cursor, etc.)
 
-## Arquivos da Aplicação
+## Application Files
 
-- **`mistral_core.py`** - Módulo principal contendo funções compartilhadas de processamento, upload/download, e gerenciamento de arquivos
-- **`mistral_gui.py`** - Interface gráfica web moderna (NiceGUI) com drag-and-drop, cards visuais e design responsivo
-- **`mistral_cl.py`** - Interface de linha de comando com suporte a argumentos, diretórios e opções
-- **`mistral_utils.py`** - Utilitário standalone para listar e limpar arquivos no serviço Mistral AI
+- **`mistral_core.py`** - Main module containing shared processing, upload/download, and file management functions
+- **`mistral_gui.py`** - Modern web GUI (NiceGUI) with drag-and-drop, visual cards, and responsive design
+- **`mistral_cl.py`** - Command-line interface with support for arguments, directories, and options
+- **`mistral_utils.py`** - Standalone utility to list and clean files on Mistral AI service
+- **`mistral_mcp_server.py`** - MCP server for AI agent integration
 
-## Instalação
+## Installation
 
-### 1. Clone o repositório ou faça download dos arquivos
+### 1. Clone the repository or download the files
 
-### 2. Instale as dependências
+### 2. Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-**Dependências:**
-- `python-dotenv>=1.0.0` - Gerenciamento de variáveis de ambiente
-- `mistralai>=1.0.0` - Cliente oficial da API Mistral AI
-- `PyPDF2>=3.0.0` - Manipulação e leitura de arquivos PDF
-- `nicegui>=3.0.0` - Framework moderno para interface web
+**Dependencies:**
 
-### 3. Configure sua chave da API Mistral AI
+- `python-dotenv>=1.0.0` - Environment variable management
+- `mistralai>=1.0.0` - Official Mistral AI API client
+- `PyPDF2>=3.0.0` - PDF file manipulation and reading
+- `nicegui>=3.0.0` - Modern web interface framework
+- `mcp>=0.9.0` - Model Context Protocol SDK
 
-**Opção A: Variável de ambiente (temporária)**
+### 3. Configure your Mistral AI API key
+
+**Option A: Environment variable (temporary)**
+
 ```bash
 # Linux/Mac
-export MISTRAL_API_KEY="sua_chave_api_aqui"
+export MISTRAL_API_KEY="your_api_key_here"
 
 # Windows (PowerShell)
-$env:MISTRAL_API_KEY="sua_chave_api_aqui"
+$env:MISTRAL_API_KEY="your_api_key_here"
 
 # Windows (CMD)
-set MISTRAL_API_KEY=sua_chave_api_aqui
+set MISTRAL_API_KEY=your_api_key_here
 ```
 
-**Opção B: Arquivo `.env` (recomendado)**
+**Option B: `.env` file (recommended)**
+
 ```bash
-# Crie um arquivo .env na raiz do projeto
-echo "MISTRAL_API_KEY=sua_chave_api_aqui" > .env
+# Create a .env file in project root
+echo "MISTRAL_API_KEY=your_api_key_here" > .env
 ```
 
-## Uso
+## Usage
 
-### Interface Gráfica Web (GUI)
-Execute a interface gráfica moderna:
+### Web Graphical Interface (GUI)
+
+Run the modern graphical interface:
+
 ```bash
 python mistral_gui.py
 ```
 
-A interface abrirá automaticamente no navegador em **http://localhost:8080**
+The interface will automatically open in your browser at **<http://localhost:8080>**
 
-**Funcionalidades da GUI:**
-- 🎨 **Design moderno e responsivo** - Interface web elegante com tema claro/escuro automático
-- 📤 **Drag-and-drop** - Arraste arquivos PDF diretamente para a interface
-- 📁 **Upload múltiplo** - Selecione vários PDFs de uma vez
-- ⚙️ **Controle de sobrescrita** - Decisões em lote para arquivos existentes
-- 📊 **Barra de progresso em tempo real** - Acompanhe o processamento visualmente
-- 📋 **Relatórios visuais** - Status detalhado com ícones e cores
-- 🚫 **Modo somente texto** - Checkbox para ignorar extração de imagens
-- 🧹 **Limpeza automática** - Gerenciamento de arquivos remotos após conclusão
+**GUI Features:**
 
-### Interface de Linha de Comando (CLI)
+- 🎨 **Modern and responsive design** - Elegant web interface with automatic light/dark theme
+- 📤 **Drag-and-drop** - Drag PDF files directly into the interface
+- 📁 **Multiple upload** - Select multiple PDFs at once
+- ⚙️ **Overwrite control** - Batch decisions for existing files
+- 📊 **Real-time progress bar** - Visually track processing
+- 📋 **Visual reports** - Detailed status with icons and colors
+- 🚫 **Text-only mode** - Checkbox to skip image extraction
+- 🧹 **Automatic cleanup** - Remote file management after completion
 
-**Processar arquivo único:**
+### Command Line Interface (CLI)
+
+**Process single file:**
+
 ```bash
-python mistral_cl.py arquivo.pdf
+python mistral_cl.py file.pdf
 ```
 
-**Processar múltiplos arquivos:**
+**Process multiple files:**
+
 ```bash
-python mistral_cl.py arquivo1.pdf arquivo2.pdf arquivo3.pdf
+python mistral_cl.py file1.pdf file2.pdf file3.pdf
 ```
 
-**Processar todos os PDFs de um diretório:**
+**Process all PDFs in a directory:**
+
 ```bash
-python mistral_cl.py /caminho/para/pasta/
+python mistral_cl.py /path/to/folder/
 ```
 
-**Processar sem extrair imagens (modo texto puro):**
+**Process without extracting images (text-only mode):**
+
 ```bash
-python mistral_cl.py arquivo.pdf --no-images
+python mistral_cl.py file.pdf --no-images
 ```
 
-**Combinar diretórios e arquivos:**
+**Combine directories and files:**
+
 ```bash
-python mistral_cl.py pasta1/ arquivo.pdf pasta2/
+python mistral_cl.py folder1/ file.pdf folder2/
 ```
 
-**Ver ajuda completa:**
+**View complete help:**
+
 ```bash
 python mistral_cl.py --help
 ```
 
-### Utilitário de Gerenciamento
+### Management Utility
 
-**Listar todos os arquivos no serviço Mistral:**
+**List all files on Mistral service:**
+
 ```bash
 python mistral_utils.py list
 ```
 
-**Limpar arquivos antigos (manter os 5 mais recentes):**
+**Clean old files (keep 5 most recent):**
+
 ```bash
 python mistral_utils.py cleanup
 ```
 
-**Limpar arquivos antigos (especificar quantidade):**
+**Clean old files (specify quantity):**
+
 ```bash
 python mistral_utils.py cleanup 10
 ```
 
-**Ver ajuda do utilitário:**
+**View utility help:**
+
 ```bash
 python mistral_utils.py help
 ```
 
-## Saída
+### MCP Server (Model Context Protocol)
 
-A aplicação criará:
-- 📄 Arquivo de texto com o conteúdo extraído (`.txt`)
-- 📝 Arquivo markdown com conteúdo formatado (`.md`)
-- 🖼️ Imagens extraídas em formato JPEG com nomenclatura única (`prefixo_001.jpeg`, `prefixo_002.jpeg`, etc.)
-- 🔗 Links de imagem corrigidos automaticamente no markdown
+The MCP server allows AI agents (like Claude, Cursor, Continue.dev, etc.) to use Mistral PDF OCR natively.
 
-## Funcionalidades Avançadas
+**Run the server:**
 
-### Extração de Imagens
-- ✅ Formato JPEG para melhor compatibilidade
-- ✅ Nomenclatura única com prefixo do arquivo
-- ✅ Correção automática de links no markdown
-- ✅ Numeração sequencial das imagens
+```bash
+python mistral_mcp_server.py
+```
 
-### Gerenciamento de Arquivos
-- ✅ Limpeza automática após processamento
-- ✅ Rastreamento de uploads/downloads
-- ✅ Utilitário independente para gerenciamento
-- ✅ Controle de quantos arquivos manter
+**Configure in an MCP client (e.g., Claude Desktop):**
 
-## Requisitos
+Edit the client configuration file and add:
 
-### Sistema
-- **Python 3.7+** (testado com Python 3.8+)
-- **Navegador web moderno** - Chrome, Firefox, Edge, Safari (para a interface gráfica)
+```json
+{
+  "mcpServers": {
+    "mistral-pdf-ocr": {
+      "command": "python",
+      "args": ["C:/Users/your_user/projects/mistral/mistral_mcp_server.py"],
+      "env": {
+        "MISTRAL_API_KEY": "your_key_here"
+      }
+    }
+  }
+}
+```
 
-### Serviços Externos
-- **Chave da API Mistral AI** - Obtenha em [https://console.mistral.ai](https://console.mistral.ai)
-- **Conexão com internet** - Necessária para comunicação com a API Mistral
+**Available tools for agents:**
 
-### Bibliotecas Python
-Veja `requirements.txt` para lista completa de dependências
+- `process_pdf` - Process a PDF with OCR
+- `process_directory` - Process multiple PDFs
+- `get_pdf_info` - Get information about PDFs
+- `list_mistral_files` - List files on service
+- `cleanup_mistral_files` - Remove old files
 
-## Estrutura do Projeto
+📚 **Complete MCP documentation:** See [MCP_README.md](MCP_README.md)
+
+## Output
+
+The application will create:
+
+- 📄 Text file with extracted content (`.txt`)
+- 📝 Markdown file with formatted content (`.md`)
+- 🖼️ Extracted images in JPEG format with unique naming (`prefix_001.jpeg`, `prefix_002.jpeg`, etc.)
+- 🔗 Image links automatically corrected in markdown
+
+## Advanced Features
+
+### Image Extraction
+
+- ✅ JPEG format for better compatibility
+- ✅ Unique naming with file prefix
+- ✅ Automatic link correction in markdown
+- ✅ Sequential image numbering
+
+### File Management
+
+- ✅ Automatic cleanup after processing
+- ✅ Upload/download tracking
+- ✅ Independent management utility
+- ✅ Control of how many files to keep
+
+## Requirements
+
+### System
+
+- **Python 3.7+** (tested with Python 3.8+)
+- **Modern web browser** - Chrome, Firefox, Edge, Safari (for GUI)
+
+### External Services
+
+- **Mistral AI API Key** - Get one at [https://console.mistral.ai](https://console.mistral.ai)
+- **Internet connection** - Required for Mistral API communication
+
+### Python Libraries
+
+See `requirements.txt` for complete list of dependencies
+
+## Project Structure
 
 ```
 mistral/
-├── mistral_core.py      # Módulo principal com funções compartilhadas
-├── mistral_gui.py       # Interface gráfica web (NiceGUI)
-├── mistral_cl.py        # Interface de linha de comando
-├── mistral_utils.py     # Utilitário standalone de gerenciamento
-├── requirements.txt     # Dependências Python
-├── .env                 # Variáveis de ambiente (criar manualmente)
-├── .gitignore           # Configuração Git
-├── README.md            # Esta documentação
-└── reports/             # Logs de atividade e relatórios
+├── mistral_core.py          # Main module with shared functions
+├── mistral_gui.py           # Web GUI (NiceGUI)
+├── mistral_cl.py            # Command-line interface
+├── mistral_utils.py         # Standalone management utility
+├── mistral_mcp_server.py    # MCP server for AI agents
+├── test_mcp_server.py       # MCP server test suite
+├── requirements.txt         # Python dependencies
+├── .env                     # Environment variables (create manually)
+├── .gitignore              # Git configuration
+├── README.md               # This documentation
+└── reports/                # Activity logs and reports
     └── activity_log.json
 ```
 
-## Exemplos de Uso
+## Usage Examples
 
-### Processamento Completo
+### Complete Processing
+
 ```bash
-# Processa um PDF extraindo texto e imagens
-python mistral_cl.py documento.pdf
+# Process a PDF extracting text and images
+python mistral_cl.py document.pdf
 
-# Resultado:
-# - documento.txt (texto extraído)
-# - documento.md (markdown formatado)
-# - documento_001.jpeg (primeira imagem)
-# - documento_002.jpeg (segunda imagem)
+# Result:
+# - document.txt (extracted text)
+# - document.md (formatted markdown)
+# - document_001.jpeg (first image)
+# - document_002.jpeg (second image)
 # - etc.
 ```
 
-### Gerenciamento de Arquivos
+### File Management
+
 ```bash
-# Vê quantos arquivos estão no serviço
+# See how many files are on the service
 python mistral_utils.py list
 
-# Limpa deixando apenas os 3 mais recentes
+# Clean leaving only the 3 most recent
 python mistral_utils.py cleanup 3
 ```
+
+## AI Agent Integration
+
+With the MCP server, AI agents can:
+
+- **Process PDFs naturally** - "Process this PDF for me"
+- **Batch operations** - "Extract text from all PDFs in this folder"
+- **Smart queries** - "Get info about this PDF without processing it"
+- **Automation** - Integrate into complex workflows
+
+## Troubleshooting
+
+**API Key Error:**
+
+- Verify `MISTRAL_API_KEY` is set correctly
+- Check if `.env` file exists in project root
+
+**Import Error:**
+
+- Install all dependencies: `pip install -r requirements.txt`
+
+**MCP Server Not Working:**
+
+- Check absolute paths in configuration
+- Verify Python is in system PATH
+- Restart the MCP client after configuration
+
+## License
+
+This project is provided as-is for educational and commercial use.
+
+## Contributing
+
+Contributions are welcome! Feel free to open issues or submit pull requests.
