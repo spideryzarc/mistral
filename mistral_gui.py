@@ -1,237 +1,273 @@
 #!/usr/bin/env python3
 """
-Mistral PDF OCR GUI Interface
+Mistral PDF OCR GUI Interface - NiceGUI
 
-Interface gráfica usando Tkinter para processamento de PDFs com OCR usando Mistral AI.
+Interface gráfica moderna usando NiceGUI para processamento de PDFs com OCR usando Mistral AI.
 """
 
 import os
-import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
+from pathlib import Path
+from nicegui import ui, app
 from mistral_core import get_decision_info, process_single_pdf, cleanup_mistral_files
 
 
-def choose_pdf_files():
-    """Abre caixa de diálogo para selecionar múltiplos PDFs e retorna os caminhos."""
-    root = tk.Tk()
-    root.withdraw()
-    pdf_paths = filedialog.askopenfilenames(
-        title="Escolha um ou mais arquivos PDF",
-        filetypes=[("PDF files", "*.pdf")]
-    )
-    return list(pdf_paths)
+# Variáveis globais para manter estado
+selected_files = []
+processing_decisions = []
+skip_images = False
 
 
-def confirm_override_custom(md_path):
-    """
-    Mostra uma janela personalizada para perguntar sobre sobrescrever o arquivo .md existente.
-    Retorna:
-        'sim'         -> Sobrescrever este
-        'nao'         -> Ignorar este
-        'nao_todos'   -> Ignorar todos os próximos
-        'cancelar'    -> Abortar tudo
-    """
-    choice = [None]
-
-    def on_yes():
-        choice[0] = "sim"
-        dialog.destroy()
-
-    def on_no():
-        choice[0] = "nao"
-        dialog.destroy()
-
-    def on_no_all():
-        choice[0] = "nao_todos"
-        dialog.destroy()
-
-    def on_cancel():
-        choice[0] = "cancelar"
-        dialog.destroy()
-
-    dialog = tk.Toplevel()
-    dialog.title("Arquivo já existe")
-    dialog.resizable(False, False)
-
-    message = f"Já existe um arquivo '{md_path}'. Deseja sobrescrever?"
-    label = tk.Label(dialog, text=message, padx=10, pady=10)
-    label.pack()
-
-    frame_buttons = tk.Frame(dialog)
-    frame_buttons.pack(pady=5)
-
-    btn_yes = tk.Button(frame_buttons, text="✅ Sim", width=12, command=on_yes)
-    btn_no = tk.Button(frame_buttons, text="❌ Não", width=12, command=on_no)
-    btn_no_todos = tk.Button(frame_buttons, text="🚫 Não para Todos", width=15, command=on_no_all)
-    btn_cancel = tk.Button(frame_buttons, text="🛑 Cancelar", width=12, command=on_cancel)
-
-    btn_yes.pack(side=tk.LEFT, padx=5)
-    btn_no.pack(side=tk.LEFT, padx=5)
-    btn_no_todos.pack(side=tk.LEFT, padx=5)
-    btn_cancel.pack(side=tk.LEFT, padx=5)
-
-    # Centralizar a janela do diálogo
-    dialog.update_idletasks()
-    w = dialog.winfo_reqwidth()
-    h = dialog.winfo_reqheight()
-    ws = dialog.winfo_screenwidth()
-    hs = dialog.winfo_screenheight()
-    x = (ws // 2) - (w // 2)
-    y = (hs // 2) - (h // 2)
-    dialog.geometry(f"+{x}+{y}")
-
-    # Bloquear execução até que a janela feche
-    dialog.transient()
-    dialog.grab_set()
-    dialog.wait_window()
-
-    return choice[0]
+def reset_state():
+    """Reseta o estado global"""
+    global selected_files, processing_decisions, skip_images
+    selected_files = []
+    processing_decisions = []
+    skip_images = False
 
 
-def collect_user_choices(pdf_paths):
-    """
-    Fase 1: Realiza todas as interações com o usuário antes do processamento pesado.
-    Retorna uma lista de dicionários com informações para cada PDF.
-    """
-    info = get_decision_info(pdf_paths)
-    override_all_nao = False
-    final_decisions = []
+async def handle_file_upload(e):
+    """Processa arquivos enviados via upload"""
+    global selected_files
+    
+    # Salva os arquivos temporariamente
+    temp_dir = Path('/tmp/mistral_uploads')
+    temp_dir.mkdir(exist_ok=True)
+    
+    for file in e.files:
+        if file.name.lower().endswith('.pdf'):
+            file_path = temp_dir / file.name
+            file_path.write_bytes(file.content.read())
+            selected_files.append(str(file_path))
+    
+    if selected_files:
+        file_list.clear()
+        with file_list:
+            ui.label(f'📁 {len(selected_files)} arquivo(s) selecionado(s):').classes('text-h6 text-green')
+            for f in selected_files:
+                ui.label(f'  • {Path(f).name}').classes('text-body2')
+        
+        process_button.enable()
+        file_info_card.set_visibility(True)
+        await show_file_info()
+    else:
+        ui.notify('Nenhum arquivo PDF selecionado!', type='warning')
 
-    for decision in info['decisions']:
-        pdf_path = decision['pdf_path']
-        md_path = decision['md_path']
-        page_count = decision['page_count']
 
-        # Se o .md já existe
-        if decision['exists']:
-            # Se "não para todos" já estiver ativo, pula direto
-            if override_all_nao:
-                final_decisions.append({
-                    'pdf_path': pdf_path,
-                    'md_path': md_path,
-                    'page_count': page_count,
-                    'action': 'skip'
-                })
-                continue
+async def show_file_info():
+    """Mostra informações sobre os arquivos selecionados"""
+    info = get_decision_info(selected_files)
+    
+    file_info_card.clear()
+    with file_info_card:
+        ui.markdown('### 📊 Informações dos Arquivos').classes('text-primary')
+        
+        if info['existing_files']:
+            ui.markdown(f"**⚠️ Arquivos .md existentes:** {len(info['existing_files'])}")
+            
+            with ui.row().classes('w-full gap-2'):
+                ui.label('Como deseja proceder?').classes('text-subtitle1')
+            
+            with ui.row().classes('w-full gap-2'):
+                ui.button('Sobrescrever Todos', 
+                         on_click=lambda: set_override_decision('sim_todos'),
+                         icon='check_circle').props('color=positive')
+                ui.button('Ignorar Todos', 
+                         on_click=lambda: set_override_decision('nao_todos'),
+                         icon='cancel').props('color=warning')
+        
+        ui.markdown(f"**📄 Total de PDFs:** {len(selected_files)}")
+        
+        total_pages = sum(d['page_count'] for d in info['decisions'])
+        max_info = max(info['decisions'], key=lambda d: d['page_count']) if info['decisions'] else None
+        
+        if max_info:
+            ui.markdown(f"**📚 Total de páginas:** {total_pages}")
+            ui.markdown(f"**📖 Arquivo com mais páginas:** {Path(max_info['pdf_path']).stem} ({max_info['page_count']} páginas)")
 
-            # Caso contrário, perguntar ao usuário
-            resposta = confirm_override_custom(md_path)
-            if resposta == 'sim':
-                pass  # Sobrescrever este
-            elif resposta == 'nao':
-                final_decisions.append({
-                    'pdf_path': pdf_path,
-                    'md_path': md_path,
-                    'page_count': page_count,
-                    'action': 'skip'
-                })
-                continue
-            elif resposta == 'nao_todos':
-                override_all_nao = True
-                final_decisions.append({
-                    'pdf_path': pdf_path,
-                    'md_path': md_path,
-                    'page_count': page_count,
-                    'action': 'skip'
-                })
-                continue
-            else:  # 'cancelar'
-                return None
 
-        # Se chegou aqui, não há .md ou usuário escolheu sobrescrever
-        final_decisions.append({
-            'pdf_path': pdf_path,
-            'md_path': md_path,
-            'page_count': page_count,
-            'action': 'process'
+def set_override_decision(decision):
+    """Define a decisão de sobrescrita"""
+    global processing_decisions
+    
+    info = get_decision_info(selected_files)
+    processing_decisions = []
+    
+    for d in info['decisions']:
+        if d['exists']:
+            action = 'process' if decision == 'sim_todos' else 'skip'
+        else:
+            action = 'process'
+        
+        processing_decisions.append({
+            'pdf_path': d['pdf_path'],
+            'md_path': d['md_path'],
+            'page_count': d['page_count'],
+            'action': action
         })
+    
+    ui.notify(f'✅ Decisão salva: {decision}', type='positive')
+    start_processing_button.set_visibility(True)
 
-    return final_decisions
 
-
-def process_pdf_ocr():
-    """Função principal do processamento com interface gráfica."""
-    # Passo 1: Escolher PDFs
-    pdf_paths = choose_pdf_files()
-    if not pdf_paths:
-        print("Nenhum arquivo selecionado. Encerrando.")
-        return
-
-    # Passo 2: Coleta todas as decisões (sobrescrita e contagem de páginas)
-    decisions = collect_user_choices(pdf_paths)
-    if decisions is None:
-        print("Operação cancelada ao escolher sobrescritas. Encerrando.")
-        return
-
-    # Filtrar apenas os que o usuário decidiu processar
-    to_process = [d for d in decisions if d['action'] == 'process']
+async def start_processing():
+    """Inicia o processamento dos PDFs"""
+    global processing_decisions, skip_images
+    
+    # Se não há decisões, cria com base nos arquivos selecionados
+    if not processing_decisions:
+        info = get_decision_info(selected_files)
+        processing_decisions = [
+            {
+                'pdf_path': d['pdf_path'],
+                'md_path': d['md_path'],
+                'page_count': d['page_count'],
+                'action': 'process'
+            }
+            for d in info['decisions']
+        ]
+    
+    to_process = [d for d in processing_decisions if d['action'] == 'process']
+    
     if not to_process:
-        print("Nenhum arquivo para processar. Encerrando.")
+        ui.notify('Nenhum arquivo para processar!', type='warning')
         return
-
-    # Calcular informações gerais
-    total_pages = sum(d['page_count'] for d in to_process)
-    max_info = max(to_process, key=lambda d: d['page_count']) if to_process else None
-    max_pages_file = os.path.splitext(os.path.basename(max_info['pdf_path']))[0] if max_info else ""
-    max_pages = max_info['page_count'] if max_info else 0
-
-    # Perguntar se deseja prosseguir
-    continuar = messagebox.askyesno(
-        "Contagem de páginas 📄",
-        f"Total de arquivos (a serem processados): {len(to_process)}\n"
-        f"Arquivo com mais páginas: {max_pages_file} ({max_pages} páginas)\n"
-        f"Total de páginas: {total_pages}\n\nDeseja prosseguir com o OCR?"
-    )
-    if not continuar:
-        print("Usuário cancelou a operação antes do processamento. Encerrando.")
-        return
-
-    # Passo 3: Processar com a barra de progresso
-    progress_window = tk.Tk()
-    progress_window.title("Processando OCR...")
-    progress_bar = ttk.Progressbar(progress_window, orient="horizontal", length=300, mode="determinate")
-    progress_bar.pack(pady=20)
-    progress_window.update()
-
-    progress_bar["maximum"] = len(to_process)
-
-    # Lista para armazenar os resultados do processamento
+    
+    # Mostra área de progresso
+    progress_card.set_visibility(True)
+    progress_card.clear()
+    
+    with progress_card:
+        ui.markdown('### 🔄 Processando...').classes('text-primary')
+        progress_bar = ui.linear_progress(show_value=True).props('size=30px color=primary')
+        status_label = ui.label('Iniciando processamento...').classes('text-subtitle1')
+    
     results = []
-
+    total = len(to_process)
+    
     for i, item in enumerate(to_process):
         pdf_path = item['pdf_path']
         md_path = item['md_path']
         
-        success, message, images_count = process_single_pdf(pdf_path, md_path)
+        # Atualiza progresso
+        progress = (i / total) * 100
+        progress_bar.value = progress / 100
+        status_label.text = f'[{i+1}/{total}] Processando {Path(pdf_path).name}...'
+        
+        # Processa o PDF
+        success, message, images_count = process_single_pdf(pdf_path, md_path, save_images=not skip_images)
         
         if success:
-            image_info = f" ({images_count} imagens salvas)" if images_count > 0 else ""
-            results.append(f"Sucesso ✅: {os.path.splitext(os.path.basename(pdf_path))[0]}{image_info}")
+            if skip_images:
+                results.append(f'✅ {Path(pdf_path).stem} (sem imagens)')
+            else:
+                image_info = f' ({images_count} imagens)' if images_count > 0 else ''
+                results.append(f'✅ {Path(pdf_path).stem}{image_info}')
         else:
-            results.append(f"Falha ❌: {os.path.splitext(os.path.basename(pdf_path))[0]}")
-            results.append(message)
-
-        progress_bar["value"] = i + 1
-        progress_window.update()
-
-    progress_window.destroy()
-
-    # Fazer limpeza opcional de arquivos antigos no Mistral
+            results.append(f'❌ {Path(pdf_path).stem} - {message}')
+    
+    # Completa progresso
+    progress_bar.value = 1.0
+    status_label.text = '✅ Processamento concluído!'
+    
+    # Limpeza de arquivos remotos
     if len(to_process) > 0:
-        print(f"\n🧹 Fazendo limpeza de arquivos antigos no serviço Mistral...")
+        ui.notify('🧹 Limpando arquivos antigos no Mistral...', type='info')
         cleanup_mistral_files(max_files_to_keep=5)
+    
+    # Mostra relatório
+    report_card.set_visibility(True)
+    report_card.clear()
+    with report_card:
+        ui.markdown('### 📋 Relatório Final').classes('text-primary')
+        for result in results:
+            if '✅' in result:
+                ui.label(result).classes('text-positive text-body1')
+            else:
+                ui.label(result).classes('text-negative text-body1')
+    
+    ui.notify('✅ Processamento concluído com sucesso!', type='positive')
+    
+    # Botão para processar novos arquivos
+    with report_card:
+        ui.button('Processar Novos Arquivos', 
+                 on_click=lambda: (reset_state(), ui.navigate.to('/')),
+                 icon='refresh').props('color=primary').classes('mt-4')
 
-    # Exibir relatório final
-    report = "\n".join(results)
-    print("Processamento concluído. Relatório final:")
-    print(report)
-    messagebox.showinfo("Relatório Final ✅", f"Processamento concluído.\n\n{report}")
+
+# Interface NiceGUI
+@ui.page('/')
+def main_page():
+    """Página principal da interface"""
+    global file_list, file_info_card, process_button, start_processing_button
+    global progress_card, report_card
+    
+    # Header
+    with ui.header().classes('items-center justify-between bg-primary'):
+        ui.label('Mistral PDF OCR').classes('text-h4')
+        ui.label('Extração de texto e imagens com IA').classes('text-subtitle1')
+    
+    # Container principal
+    with ui.column().classes('w-full max-w-4xl mx-auto p-4 gap-4'):
+        
+        # Card de upload
+        with ui.card().classes('w-full'):
+            ui.markdown('## 📤 Selecione os Arquivos PDF').classes('text-h5 text-primary')
+            
+            ui.upload(
+                label='Arraste arquivos PDF aqui ou clique para selecionar',
+                multiple=True,
+                auto_upload=True,
+                on_upload=handle_file_upload,
+                on_rejected=lambda: ui.notify('Apenas arquivos PDF são aceitos!', type='warning')
+            ).props('accept=.pdf color=primary').classes('w-full')
+            
+            ui.checkbox('Modo somente texto (ignorar imagens)', 
+                       value=skip_images,
+                       on_change=lambda e: globals().update({'skip_images': e.value}))
+        
+        # Lista de arquivos selecionados
+        file_list = ui.column().classes('w-full')
+        
+        # Card com informações dos arquivos
+        file_info_card = ui.card().classes('w-full')
+        file_info_card.set_visibility(False)
+        
+        # Botão de processar (alternativo se não houver decisões)
+        process_button = ui.button('Processar Arquivos', 
+                                   on_click=start_processing,
+                                   icon='play_arrow').props('color=positive size=lg').classes('w-full')
+        process_button.disable()
+        
+        # Botão de iniciar processamento (após decisões)
+        start_processing_button = ui.button('Iniciar Processamento', 
+                                           on_click=start_processing,
+                                           icon='rocket_launch').props('color=positive size=lg').classes('w-full')
+        start_processing_button.set_visibility(False)
+        
+        # Card de progresso
+        progress_card = ui.card().classes('w-full')
+        progress_card.set_visibility(False)
+        
+        # Card de relatório
+        report_card = ui.card().classes('w-full')
+        report_card.set_visibility(False)
+    
+    # Footer
+    with ui.footer().classes('bg-grey-8'):
+        ui.label('Powered by Mistral AI & NiceGUI').classes('text-caption')
 
 
 def main():
-    """Função principal da interface gráfica."""
-    process_pdf_ocr()
+    """Função principal"""
+    ui.run(
+        title='Mistral PDF OCR',
+        favicon='📄',
+        dark=None,  # Auto detect dark mode
+        reload=False,
+        show=True,
+        port=8080
+    )
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

@@ -73,7 +73,7 @@ def process_images_from_response(response, base_filename):
                     # Verifica se a imagem tem dados base64 (usando o atributo correto)
                     if hasattr(image, 'image_base64') and image.image_base64:
                         # Gera o nome do arquivo da imagem com prefixo baseado no nome do arquivo
-                        image_filename = f"{base_filename}_{image_counter:02d}.jpeg"
+                        image_filename = f"{base_filename}_{image_counter:03d}.jpeg"
                         
                         # Salva a imagem
                         if save_base64_image(image.image_base64, image_filename):
@@ -98,8 +98,8 @@ def fix_image_links_in_markdown(markdown_content, base_filename):
     def replace_image_link(match):
         alt_text = match.group(1)
         image_number = int(match.group(2))
-        # Converte img-0.jpeg para nome_01.jpeg, img-1.jpeg para nome_02.jpeg, etc.
-        corrected_name = f"{os.path.basename(base_filename)}_{image_number+1:02d}.jpeg"
+        # Converte img-0.jpeg para nome_001.jpeg, img-1.jpeg para nome_002.jpeg, etc.
+        corrected_name = f"{os.path.basename(base_filename)}_{image_number+1:03d}.jpeg"
         return f'![{alt_text}]({corrected_name})'
     
     corrected_markdown = re.sub(pattern, replace_image_link, markdown_content)

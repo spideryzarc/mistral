@@ -1,0 +1,45 @@
+[
+  {
+    "date": "2026-02-02T11:11:28",
+    "objective": "Adicionar tkinter ao requirements.txt",
+    "result": "Adicionado pacote tk às dependências do projeto",
+    "changed_files": [
+      "/home/einstein/projects/mistral/requirements.txt"
+    ],
+    "status": "success",
+    "notes": "Tkinter é referenciado como 'tk' no pip"
+  },
+  {
+    "date": "2026-02-02T14:42:57",
+    "objective": "Atualizar README para refletir estado atual do projeto",
+    "result": "Atualizado README.md com funcionalidades expandidas, instruções de instalação melhoradas, documentação completa da CLI/GUI e estrutura de projeto precisa",
+    "changed_files": [
+      "/home/einstein/projects/mistral/README.md"
+    ],
+    "status": "success",
+    "notes": "Adicionadas seções sobre modo --no-images, processamento de diretórios, configuração via .env, e requisitos detalhados do sistema"
+  },
+  {
+    "date": "2026-02-02T14:48:09",
+    "objective": "Aprimorar numeração de imagens extraídas",
+    "result": "Alterada numeração de imagens de 2 dígitos (01, 02) para 3 dígitos (001, 002, 003), permitindo suporte para até 999 imagens por PDF",
+    "changed_files": [
+      "/home/einstein/projects/mistral/mistral_core.py",
+      "/home/einstein/projects/mistral/README.md"
+    ],
+    "status": "success",
+    "notes": "Modificadas funções process_images_from_response e fix_image_links_in_markdown; documentação atualizada"
+  },
+  {
+    "date": "2026-02-02T14:55:22",
+    "objective": "Migrar interface gráfica de Tkinter para NiceGUI",
+    "result": "Substituída completamente a interface Tkinter por NiceGUI - interface web moderna com drag-and-drop, design responsivo, tema claro/escuro automático, e melhor UX",
+    "changed_files": [
+      "/home/einstein/projects/mistral/mistral_gui.py",
+      "/home/einstein/projects/mistral/requirements.txt",
+      "/home/einstein/projects/mistral/README.md"
+    ],
+    "status": "success",
+    "notes": "NiceGUI roda em http://localhost:8080. Backup do código Tkinter salvo em mistral_gui_tkinter.py.bak. Não requer mais python3-tk do sistema."
+  }
+]
