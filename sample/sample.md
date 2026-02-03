@@ -1,4 +1,4 @@
-# Resultado do OCR
+# OCR Result
 
 Texto texto de exemplo
 

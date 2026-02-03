@@ -1,87 +1,33 @@
 [
   {
-    "date": "2026-02-02T11:11:28",
-    "objective": "Adicionar tkinter ao requirements.txt",
-    "result": "Adicionado pacote tk às dependências do projeto",
+    "date": "2026-02-03T09:42:31",
+    "objective": "Configurar servidor MCP Mistral globalmente no Antigravity IDE",
+    "result": "Configurado servidor 'mistral-pdf-ocr' no MCP global com Python do .venv, PYTHONPATH e MISTRAL_API_KEY",
+    "changed_files": [
+      "/home/einstein/.gemini/antigravity/mcp_config.json"
+    ],
+    "status": "success",
+    "notes": "Servidor usa Python do ambiente virtual em /home/einstein/projects/mistral/.venv/bin/python. Chave de API configurada. Requer reinicialização do IDE para ativar."
+  },
+  {
+    "date": "2026-02-03T10:02:50",
+    "objective": "Adicionar MCP ao requirements.txt e instalar",
+    "result": "Adicionado 'mcp>=1.0.0' ao requirements.txt e instalado com sucesso",
     "changed_files": [
       "/home/einstein/projects/mistral/requirements.txt"
     ],
     "status": "success",
-    "notes": "Tkinter é referenciado como 'tk' no pip"
+    "notes": "Pacote MCP instalado no ambiente virtual do projeto"
   },
   {
-    "date": "2026-02-02T14:42:57",
-    "objective": "Atualizar README para refletir estado atual do projeto",
-    "result": "Atualizado README.md com funcionalidades expandidas, instruções de instalação melhoradas, documentação completa da CLI/GUI e estrutura de projeto precisa",
+    "date": "2026-02-03T10:07:40",
+    "objective": "Obter PDF via Semantic Scholar/arXiv e converter usando Mistral MCP",
+    "result": "Paper 'Reward-free Alignment for Conflicting Objectives' baixado para sample/ e convertido para MD",
     "changed_files": [
-      "/home/einstein/projects/mistral/README.md"
+      "/home/einstein/projects/mistral/sample/2602.02495v1.pdf",
+      "/home/einstein/projects/mistral/sample/reward_free_alignment.md"
     ],
     "status": "success",
-    "notes": "Adicionadas seções sobre modo --no-images, processamento de diretórios, configuração via .env, e requisitos detalhados do sistema"
-  },
-  {
-    "date": "2026-02-02T14:48:09",
-    "objective": "Aprimorar numeração de imagens extraídas",
-    "result": "Alterada numeração de imagens de 2 dígitos (01, 02) para 3 dígitos (001, 002, 003), permitindo suporte para até 999 imagens por PDF",
-    "changed_files": [
-      "/home/einstein/projects/mistral/mistral_core.py",
-      "/home/einstein/projects/mistral/README.md"
-    ],
-    "status": "success",
-    "notes": "Modificadas funções process_images_from_response e fix_image_links_in_markdown; documentação atualizada"
-  },
-  {
-    "date": "2026-02-02T14:55:22",
-    "objective": "Migrar interface gráfica de Tkinter para NiceGUI",
-    "result": "Substituída completamente a interface Tkinter por NiceGUI - interface web moderna com drag-and-drop, design responsivo, tema claro/escuro automático, e melhor UX",
-    "changed_files": [
-      "/home/einstein/projects/mistral/mistral_gui.py",
-      "/home/einstein/projects/mistral/requirements.txt",
-      "/home/einstein/projects/mistral/README.md"
-    ],
-    "status": "success",
-    "notes": "NiceGUI roda em http://localhost:8080. Backup do código Tkinter salvo em mistral_gui_tkinter.py.bak. Não requer mais python3-tk do sistema."
-  },
-  {
-    "date": "2026-02-02T19:30:00",
-    "objective": "Corrigir bug de upload na interface NiceGUI",
-    "result": "Corrigido AttributeError no handler de upload - atualizada API de e.files para e.name/e.content; alterado diretório temporário de /tmp para temp_uploads (compatibilidade Windows)",
-    "changed_files": [
-      "c:/Users/spideryzarc/projetos/mistral/mistral_gui.py"
-    ],
-    "status": "success",
-    "notes": "API da NiceGUI mudou - UploadEventArguments não tem mais atributo 'files', usa 'name' e 'content' diretamente"
-  },
-  {
-    "date": "2026-02-02T19:35:00",
-    "objective": "Implementar servidor MCP para integração nativa com agentes de IA",
-    "result": "Criado servidor MCP completo com 5 ferramentas (process_pdf, process_directory, get_pdf_info, list_mistral_files, cleanup_mistral_files); adicionados MCP_README.md, test_mcp_server.py, e mcp_config.json; documentação atualizada",
-    "changed_files": [
-      "c:/Users/spideryzarc/projetos/mistral/mistral_mcp_server.py",
-      "c:/Users/spideryzarc/projetos/mistral/MCP_README.md",
-      "c:/Users/spideryzarc/projetos/mistral/test_mcp_server.py",
-      "c:/Users/spideryzarc/projetos/mistral/mcp_config.json",
-      "c:/Users/spideryzarc/projetos/mistral/README.md",
-      "c:/Users/spideryzarc/projetos/mistral/.gitignore"
-    ],
-    "status": "success",
-    "notes": "Servidor compatível com Claude Desktop, Cursor, Continue.dev e outros clientes MCP; testes validados com sucesso"
-  },
-  {
-    "date": "2026-02-02T20:03:24",
-    "objective": "Complete internationalization of the project to English",
-    "result": "Translated all Python files, README.md, and documentation from Portuguese to English; MCP server fully operational; all tests passing",
-    "changed_files": [
-      "c:/Users/spideryzarc/projetos/mistral/mistral_core.py",
-      "c:/Users/spideryzarc/projetos/mistral/mistral_mcp_server.py",
-      "c:/Users/spideryzarc/projetos/mistral/test_mcp_server.py",
-      "c:/Users/spideryzarc/projetos/mistral/mistral_utils.py",
-      "c:/Users/spideryzarc/projetos/mistral/mistral_cl.py",
-      "c:/Users/spideryzarc/projetos/mistral/mistral_gui.py",
-      "c:/Users/spideryzarc/projetos/mistral/README.md",
-      "c:/Users/spideryzarc/.gemini/antigravity/mcp_config.json"
-    ],
-    "status": "success",
-    "notes": "Full i18n transformation: code comments, docstrings, user messages, CLI prompts, GUI labels, and documentation now in English; project ready for international use"
+    "notes": "Workflow completo testado: busca via MCP paper-search, download do arXiv e conversão OCR via Mistral."
   }
 ]
