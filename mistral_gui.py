@@ -6,6 +6,9 @@ Modern graphical interface using NiceGUI for PDF processing with OCR using Mistr
 """
 
 import os
+import time
+import zipfile
+import shutil
 from pathlib import Path
 from nicegui import ui, app, run
 from mistral_core import get_decision_info, process_single_pdf, cleanup_mistral_files
@@ -18,11 +21,19 @@ skip_images = False
 
 
 def reset_state():
-    """Resets global state"""
+    """Resets global state and cleans temp folder"""
     global selected_files, processing_decisions, skip_images
     selected_files = []
     processing_decisions = []
     skip_images = False
+
+    temp_dir = Path('temp_uploads')
+    if temp_dir.exists():
+        try:
+            shutil.rmtree(temp_dir)
+        except Exception:
+            pass
+    temp_dir.mkdir(exist_ok=True)
 
 
 async def handle_file_upload(e):
@@ -196,11 +207,37 @@ async def start_processing():
 
     ui.notify('✅ Processing completed successfully!', type='positive')
 
-    # Button to process new files
+    # Download and process new files buttons
     with report_card:
-        ui.button('Process New Files',
-                  on_click=lambda: (reset_state(), ui.navigate.to('/')),
-                  icon='refresh').props('color=primary').classes('mt-4')
+        with ui.row().classes('w-full justify-start gap-4 mt-4'):
+            def download_and_cleanup():
+                temp_dir = Path('temp_uploads')
+                zip_filename = f"resultados_mistral_{int(time.time())}.zip"
+                zip_path = temp_dir / zip_filename
+                
+                with zipfile.ZipFile(zip_path, 'w') as zipf:
+                    for f in temp_dir.glob('*'):
+                        if f.is_file() and f.suffix.lower() in ['.md', '.jpeg', '.jpg']:
+                            zipf.write(f, f.name)
+                            
+                ui.download(str(zip_path), zip_filename)
+                ui.notify('⬇️ Download iniciado! Limpando arquivos...', type='info')
+                
+                # Clean up all other files in temp_uploads
+                for f in temp_dir.glob('*'):
+                    try:
+                        if f.is_file() and f.name != zip_filename:
+                            f.unlink()
+                    except Exception as e:
+                        print(f"Erro ao limpar {f.name}: {e}")
+
+            ui.button('Baixar Resultados (.zip)',
+                      on_click=download_and_cleanup,
+                      icon='download').props('color=secondary')
+
+            ui.button('Processar Novos',
+                      on_click=lambda: (reset_state(), ui.navigate.to('/')),
+                      icon='refresh').props('color=primary')
 
 
 # NiceGUI Interface

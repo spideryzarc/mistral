@@ -37,5 +37,15 @@
         "changed_files": [],
         "status": "success",
         "notes": ""
+    },
+    {
+        "date": "2026-02-20T15:33:12",
+        "objective": "Implement ZIP download for converted files and clean temp folder",
+        "result": "Adicionado botão para baixar arquivos gerados em .zip e implementado rotina de limpeza para esvaziar a pasta temp_uploads.",
+        "changed_files": [
+            "/home/einstein/projects/mistral/mistral_gui.py"
+        ],
+        "status": "success",
+        "notes": ""
     }
 ]
