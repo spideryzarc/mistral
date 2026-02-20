@@ -1,33 +1,41 @@
 [
-  {
-    "date": "2026-02-03T09:42:31",
-    "objective": "Configurar servidor MCP Mistral globalmente no Antigravity IDE",
-    "result": "Configurado servidor 'mistral-pdf-ocr' no MCP global com Python do .venv, PYTHONPATH e MISTRAL_API_KEY",
-    "changed_files": [
-      "/home/einstein/.gemini/antigravity/mcp_config.json"
-    ],
-    "status": "success",
-    "notes": "Servidor usa Python do ambiente virtual em /home/einstein/projects/mistral/.venv/bin/python. Chave de API configurada. Requer reinicialização do IDE para ativar."
-  },
-  {
-    "date": "2026-02-03T10:02:50",
-    "objective": "Adicionar MCP ao requirements.txt e instalar",
-    "result": "Adicionado 'mcp>=1.0.0' ao requirements.txt e instalado com sucesso",
-    "changed_files": [
-      "/home/einstein/projects/mistral/requirements.txt"
-    ],
-    "status": "success",
-    "notes": "Pacote MCP instalado no ambiente virtual do projeto"
-  },
-  {
-    "date": "2026-02-03T10:07:40",
-    "objective": "Obter PDF via Semantic Scholar/arXiv e converter usando Mistral MCP",
-    "result": "Paper 'Reward-free Alignment for Conflicting Objectives' baixado para sample/ e convertido para MD",
-    "changed_files": [
-      "/home/einstein/projects/mistral/sample/2602.02495v1.pdf",
-      "/home/einstein/projects/mistral/sample/reward_free_alignment.md"
-    ],
-    "status": "success",
-    "notes": "Workflow completo testado: busca via MCP paper-search, download do arXiv e conversão OCR via Mistral."
-  }
+    {
+        "date": "2026-02-03T09:42:31",
+        "objective": "Configurar servidor MCP Mistral globalmente no Antigravity IDE",
+        "result": "Configurado servidor 'mistral-pdf-ocr' no MCP global com Python do .venv, PYTHONPATH e MISTRAL_API_KEY",
+        "changed_files": [
+            "/home/einstein/.gemini/antigravity/mcp_config.json"
+        ],
+        "status": "success",
+        "notes": "Servidor usa Python do ambiente virtual em /home/einstein/projects/mistral/.venv/bin/python. Chave de API configurada. Requer reinicialização do IDE para ativar."
+    },
+    {
+        "date": "2026-02-03T10:02:50",
+        "objective": "Adicionar MCP ao requirements.txt e instalar",
+        "result": "Adicionado 'mcp>=1.0.0' ao requirements.txt e instalado com sucesso",
+        "changed_files": [
+            "/home/einstein/projects/mistral/requirements.txt"
+        ],
+        "status": "success",
+        "notes": "Pacote MCP instalado no ambiente virtual do projeto"
+    },
+    {
+        "date": "2026-02-03T10:07:40",
+        "objective": "Obter PDF via Semantic Scholar/arXiv e converter usando Mistral MCP",
+        "result": "Paper 'Reward-free Alignment for Conflicting Objectives' baixado para sample/ e convertido para MD",
+        "changed_files": [
+            "/home/einstein/projects/mistral/sample/2602.02495v1.pdf",
+            "/home/einstein/projects/mistral/sample/reward_free_alignment.md"
+        ],
+        "status": "success",
+        "notes": "Workflow completo testado: busca via MCP paper-search, download do arXiv e conversão OCR via Mistral."
+    },
+    {
+        "date": "2026-02-20T10:20:41",
+        "objective": "corrija o erro",
+        "result": "Fixed AttributeError in mistral_gui.py during file upload by updating e.name to e.file.name and e.content to await e.file.save(...) as required by newer NiceGUI 3+ API.",
+        "changed_files": [],
+        "status": "success",
+        "notes": ""
+    }
 ]

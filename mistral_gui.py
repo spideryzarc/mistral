@@ -7,7 +7,7 @@ Modern graphical interface using NiceGUI for PDF processing with OCR using Mistr
 
 import os
 from pathlib import Path
-from nicegui import ui, app
+from nicegui import ui, app, run
 from mistral_core import get_decision_info, process_single_pdf, cleanup_mistral_files
 
 
@@ -33,10 +33,10 @@ async def handle_file_upload(e):
     temp_dir = Path('temp_uploads')
     temp_dir.mkdir(exist_ok=True)
 
-    # In NiceGUI, the event has the file directly (e.name, e.content)
-    if e.name.lower().endswith('.pdf'):
-        file_path = temp_dir / e.name
-        file_path.write_bytes(e.content.read())
+    # In NiceGUI 3.0+, the event has the file inside the `file` attribute
+    if e.file.name.lower().endswith('.pdf'):
+        file_path = temp_dir / e.file.name
+        await e.file.save(file_path)
         selected_files.append(str(file_path))
 
     if selected_files:
@@ -161,8 +161,9 @@ async def start_processing():
         status_label.text = f'[{i+1}/{total}] Processing {Path(pdf_path).name}...'
 
         # Process PDF
-        success, message, images_count = process_single_pdf(
-            pdf_path, md_path, save_images=not skip_images)
+        success, message, images_count = await run.io_bound(
+            process_single_pdf, pdf_path, md_path, save_images=not skip_images
+        )
 
         if success:
             if skip_images:
@@ -180,7 +181,7 @@ async def start_processing():
     # Remote file cleanup
     if len(to_process) > 0:
         ui.notify('🧹 Cleaning old files in Mistral...', type='info')
-        cleanup_mistral_files(max_files_to_keep=5)
+        await run.io_bound(cleanup_mistral_files, max_files_to_keep=5)
 
     # Show report
     report_card.set_visibility(True)
@@ -232,9 +233,13 @@ def main_page():
                     'Only PDF files are accepted!', type='warning')
             ).props('accept=.pdf color=primary').classes('w-full')
 
+            def update_skip_images(e):
+                global skip_images
+                skip_images = e.value
+
             ui.checkbox('Text-only mode (skip images)',
                         value=skip_images,
-                        on_change=lambda e: globals().update({'skip_images': e.value}))
+                        on_change=update_skip_images)
 
         # Selected files list
         file_list = ui.column().classes('w-full')
@@ -273,7 +278,6 @@ def main():
     ui.run(
         title='Mistral PDF OCR',
         favicon='📄',
-        dark=None,  # Auto detect dark mode
         reload=False,
         show=True,
         port=8080
