@@ -43,7 +43,7 @@ async def test_mcp_tools():
     print("📊 Test 2: Get PDF information")
     print("-" * 60)
 
-    sample_pdf = Path("sample.pdf")
+    sample_pdf = Path("sample/sample.pdf")
     if sample_pdf.exists():
         try:
             result = await call_tool(

@@ -10,7 +10,7 @@ import os
 import glob
 import base64
 from dotenv import load_dotenv
-from mistralai import Mistral
+from mistralai.client import Mistral
 import PyPDF2
 
 # Load environment variables from .env file
