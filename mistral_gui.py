@@ -256,6 +256,11 @@ def main_page():
     # Main container
     with ui.column().classes('w-full max-w-4xl mx-auto p-4 gap-4'):
 
+        if not os.getenv("MISTRAL_API_KEY"):
+            ui.notify('⚠️ Chave da API não carregada!', type='negative', position='top')
+            with ui.card().classes('w-full bg-red-100 items-center p-4 border border-red-500'):
+                ui.label('⚠️ AVISO: Chave da API (MISTRAL_API_KEY) não encontrada! Configure no arquivo .env antes de usar.').classes('text-negative text-h6 font-bold text-center')
+
         # Upload card
         with ui.card().classes('w-full'):
             ui.markdown('## 📤 Select PDF Files').classes(
