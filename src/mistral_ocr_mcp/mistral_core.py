@@ -7,18 +7,30 @@ using the Mistral AI API, including OCR, image extraction and utilities.
 """
 
 import os
+import sys
 import glob
 import base64
 from dotenv import load_dotenv
 from mistralai.client import Mistral
 import PyPDF2
 
+def _log_err(*args, **kwargs):
+    kwargs.setdefault("file", sys.stderr)
+    import builtins
+    builtins.print(*args, **kwargs)
+
+# Overwrite print for this module to ensure MCP stdout is not broken
+print = _log_err
+
 # Load environment variables from .env file
 load_dotenv()
 
 # Configure Mistral client with API key
 api_key = os.getenv("MISTRAL_API_KEY")
-client = Mistral(api_key=api_key)
+if not api_key:
+    print("WARNING: MISTRAL_API_KEY environment variable is missing. Please set it in your environment or MCP config.")
+
+client = Mistral(api_key=api_key) if api_key else None
 
 
 def get_pdf_page_count(pdf_path):
@@ -122,6 +134,9 @@ def process_single_pdf(pdf_path, md_path, save_images=True):
     """
     base_filename = os.path.splitext(md_path)[0]
     uploaded_file = None
+
+    if not client:
+        return False, "MISTRAL_API_KEY environment variable is not configured.", 0
 
     try:
         with open(pdf_path, "rb") as pdf_file:
@@ -241,6 +256,9 @@ def list_mistral_files():
         list: List of files in Mistral service
     """
     try:
+        if not client:
+            print("MISTRAL_API_KEY not configured. Cannot list files.")
+            return []
         files_list = client.files.list()
         return files_list.data if hasattr(files_list, 'data') else []
     except Exception as e:
@@ -259,6 +277,9 @@ def cleanup_mistral_files(max_files_to_keep=5):
         int: Number of files removed
     """
     try:
+        if not client:
+            print("MISTRAL_API_KEY not configured. Cannot cleanup files.")
+            return 0
         files = list_mistral_files()
 
         if len(files) <= max_files_to_keep:

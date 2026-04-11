@@ -8,7 +8,7 @@ Command line interface for PDF processing with OCR using Mistral AI.
 import os
 import sys
 import glob
-from mistral_core import get_decision_info, process_single_pdf, cleanup_mistral_files
+from mistral_ocr_mcp.mistral_core import get_decision_info, process_single_pdf, cleanup_mistral_files
 
 
 def choose_pdf_files():

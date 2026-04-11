@@ -6,7 +6,7 @@ This script allows listing and cleaning files stored in Mistral service.
 """
 
 import sys
-from mistral_core import list_mistral_files, cleanup_mistral_files
+from mistral_ocr_mcp.mistral_core import list_mistral_files, cleanup_mistral_files
 
 
 def show_help():

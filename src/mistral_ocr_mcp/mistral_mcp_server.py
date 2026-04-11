@@ -16,7 +16,7 @@ from mcp.types import Tool, TextContent, ImageContent, EmbeddedResource
 import mcp.server.stdio
 
 # Import functionalities from core module
-from mistral_core import (
+from mistral_ocr_mcp.mistral_core import (
     process_single_pdf,
     get_pdf_page_count,
     get_decision_info,
@@ -343,6 +343,9 @@ async def main():
             app.create_initialization_options()
         )
 
+def main_sync():
+    """Synchronous entry point for the CLI/uvx."""
+    asyncio.run(main())
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main_sync()

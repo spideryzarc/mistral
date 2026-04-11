@@ -11,7 +11,7 @@ import zipfile
 import shutil
 from pathlib import Path
 from nicegui import ui, app, run
-from mistral_core import get_decision_info, process_single_pdf, cleanup_mistral_files
+from mistral_ocr_mcp.mistral_core import get_decision_info, process_single_pdf, cleanup_mistral_files
 
 
 # Global variables to maintain state

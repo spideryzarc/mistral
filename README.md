@@ -17,29 +17,25 @@ A Python application for processing PDF files using Mistral AI's OCR capabilitie
 
 ## Application Files
 
-- **`mistral_core.py`** - Main module containing shared processing, upload/download, and file management functions
-- **`mistral_gui.py`** - Modern web GUI (NiceGUI) with drag-and-drop, visual cards, and responsive design
-- **`mistral_cl.py`** - Command-line interface with support for arguments, directories, and options
-- **`mistral_utils.py`** - Standalone utility to list and clean files on Mistral AI service
+- **`mistral_core.py`** - Main module containing shared processing algorithms
+- **`mistral_gui.py`** - Modern web GUI (NiceGUI) with drag-and-drop
+- **`mistral_cl.py`** - Command-line interface with support for arguments
+- **`mistral_utils.py`** - Standalone utility to list and clean files on Mistral 
 - **`mistral_mcp_server.py`** - MCP server for AI agent integration
 
-## Installation
-
-### 1. Clone the repository or download the files
-
-### 2. Install dependencies
+The easiest way to use the standalone applications is by using `uvx` (or `pipx`) to install directly from the repository.
 
 ```bash
-pip install -r requirements.txt
+uvx --from git+https://github.com/spideryzarc/mistral mistral-ocr-cli --help
 ```
 
-**Dependencies:**
+Or clone the repository to run it locally:
 
-- `python-dotenv>=1.0.0` - Environment variable management
-- `mistralai>=1.0.0` - Official Mistral AI API client
-- `PyPDF2>=3.0.0` - PDF file manipulation and reading
-- `nicegui>=3.0.0` - Modern web interface framework
-- `mcp>=0.9.0` - Model Context Protocol SDK
+```bash
+git clone https://github.com/spideryzarc/mistral.git
+cd mistral
+pip install -e .
+```
 
 ### 3. Configure your Mistral AI API key
 
@@ -70,108 +66,53 @@ echo "MISTRAL_API_KEY=your_api_key_here" > .env
 Run the modern graphical interface:
 
 ```bash
-python mistral_gui.py
+mistral-ocr-gui
 ```
+(Or `uvx --from git+https://github.com/spideryzarc/mistral mistral-ocr-gui` if not installed)
 
 The interface will automatically open in your browser at **<http://localhost:8080>**
 
 **GUI Features:**
-
-- 🎨 **Modern and responsive design** - Elegant web interface with automatic light/dark theme
-- 📤 **Drag-and-drop** - Drag PDF files directly into the interface
-- 📁 **Multiple upload** - Select multiple PDFs at once
-- ⚙️ **Overwrite control** - Batch decisions for existing files
+- 🎨 **Modern and responsive design** - Elegant web interface
+- 📤 **Drag-and-drop** - Drag PDF files directly
 - 📊 **Real-time progress bar** - Visually track processing
-- 📋 **Visual reports** - Detailed status with icons and colors
-- 🚫 **Text-only mode** - Checkbox to skip image extraction
-- 🧹 **Automatic cleanup** - Remote file management after completion
 
 ### Command Line Interface (CLI)
 
 **Process single file:**
-
 ```bash
-python mistral_cl.py file.pdf
-```
-
-**Process multiple files:**
-
-```bash
-python mistral_cl.py file1.pdf file2.pdf file3.pdf
-```
-
-**Process all PDFs in a directory:**
-
-```bash
-python mistral_cl.py /path/to/folder/
+mistral-ocr-cli file.pdf
 ```
 
 **Process without extracting images (text-only mode):**
-
 ```bash
-python mistral_cl.py file.pdf --no-images
-```
-
-**Combine directories and files:**
-
-```bash
-python mistral_cl.py folder1/ file.pdf folder2/
-```
-
-**View complete help:**
-
-```bash
-python mistral_cl.py --help
+mistral-ocr-cli file.pdf --no-images
 ```
 
 ### Management Utility
 
-**List all files on Mistral service:**
-
-```bash
-python mistral_utils.py list
-```
-
-**Clean old files (keep 5 most recent):**
-
-```bash
-python mistral_utils.py cleanup
-```
-
-**Clean old files (specify quantity):**
-
-```bash
-python mistral_utils.py cleanup 10
-```
-
-**View utility help:**
-
-```bash
-python mistral_utils.py help
-```
+To use the standalone scripts locally, run `python src/mistral_ocr_mcp/mistral_utils.py list`
 
 ### MCP Server (Model Context Protocol)
 
 The MCP server allows AI agents (like Claude, Cursor, Continue.dev, etc.) to use Mistral PDF OCR natively.
 
-**Run the server:**
+**Configure in an MCP client (e.g., Claude Desktop or Cursor):**
 
-```bash
-python mistral_mcp_server.py
-```
-
-**Configure in an MCP client (e.g., Claude Desktop):**
-
-Edit the client configuration file and add:
+Edit your `mcp_config.json` or equivalent configuration file and add:
 
 ```json
 {
   "mcpServers": {
     "mistral-pdf-ocr": {
-      "command": "python",
-      "args": ["C:/Users/your_user/projects/mistral/mistral_mcp_server.py"],
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/spideryzarc/mistral",
+        "mistral-ocr-mcp"
+      ],
       "env": {
-        "MISTRAL_API_KEY": "your_key_here"
+        "MISTRAL_API_KEY": "your_api_key_here"
       }
     }
   }
@@ -233,18 +174,17 @@ See `requirements.txt` for complete list of dependencies
 
 ```
 mistral/
-├── mistral_core.py          # Main module with shared functions
-├── mistral_gui.py           # Web GUI (NiceGUI)
-├── mistral_cl.py            # Command-line interface
-├── mistral_utils.py         # Standalone management utility
-├── mistral_mcp_server.py    # MCP server for AI agents
-├── test_mcp_server.py       # MCP server test suite
-├── requirements.txt         # Python dependencies
-├── .env                     # Environment variables (create manually)
-├── .gitignore              # Git configuration
-├── README.md               # This documentation
-└── reports/                # Activity logs and reports
-    └── activity_log.json
+├── pyproject.toml           # Python packaging configuration
+├── src/mistral_ocr_mcp/     # Main package directory
+│   ├── __init__.py
+│   ├── mistral_core.py      # Main module with shared functions
+│   ├── mistral_gui.py       # Web GUI (NiceGUI)
+│   ├── mistral_cl.py        # Command-line interface
+│   ├── mistral_utils.py     # Standalone management utility
+│   └── mistral_mcp_server.py# MCP server for AI agents
+├── requirements.txt         # Dependencies mapping
+├── README.md                # This documentation
+└── ...
 ```
 
 ## Usage Examples
