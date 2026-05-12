@@ -20,9 +20,9 @@ gui = ["nicegui>=1.4.0"]
 cli = ["click>=8.0.0"]
 
 [project.scripts]
-mistral-pdf-ocr = "mistral_ocr_mcp.mistral_mcp_server:main_sync"
-mistral-pdf-ocr-cli = "mistral_ocr_mcp.mistral_cl:main"
-mistral-pdf-ocr-gui = "mistral_ocr_mcp.mistral_gui:main"
+mistral-pdf-ocr = "mistral_pdf_ocr.mistral_mcp_server:main_sync"
+mistral-pdf-ocr-cli = "mistral_pdf_ocr.mistral_cl:main"
+mistral-pdf-ocr-gui = "mistral_pdf_ocr.mistral_gui:main"
 
 [tool.hatch.metadata]
 allow-direct-references = true

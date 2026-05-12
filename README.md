@@ -91,7 +91,7 @@ mistral-ocr-cli file.pdf --no-images
 
 ### Management Utility
 
-To use the standalone scripts locally, run `python src/mistral_ocr_mcp/mistral_utils.py list`
+To use the standalone scripts locally, run `python src/mistral_pdf_ocr/mistral_utils.py list`
 
 ### MCP Server (Model Context Protocol)
 
@@ -109,7 +109,7 @@ Edit your `mcp_config.json` or equivalent configuration file and add:
       "args": [
         "--from",
         "git+https://github.com/spideryzarc/mistral",
-        "mistral-ocr-mcp"
+        "mistral-pdf-ocr"
       ],
       "env": {
         "MISTRAL_API_KEY": "your_api_key_here"
@@ -175,7 +175,7 @@ See `requirements.txt` for complete list of dependencies
 ```
 mistral/
 ├── pyproject.toml           # Python packaging configuration
-├── src/mistral_ocr_mcp/     # Main package directory
+├── src/mistral_pdf_ocr/     # Main package directory
 │   ├── __init__.py
 │   ├── mistral_core.py      # Main module with shared functions
 │   ├── mistral_gui.py       # Web GUI (NiceGUI)

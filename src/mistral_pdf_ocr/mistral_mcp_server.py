@@ -16,7 +16,7 @@ from mcp.types import Tool, TextContent, ImageContent, EmbeddedResource
 import mcp.server.stdio
 
 # Import functionalities from core module
-from mistral_ocr_mcp.mistral_core import (
+from mistral_pdf_ocr.mistral_core import (
     process_single_pdf,
     get_pdf_page_count,
     get_decision_info,
