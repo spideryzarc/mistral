@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "mistral-ocr-mcp"
+name = "mistral-pdf-ocr"
 version = "0.1.0"
 description = "Mistral PDF OCR MCP Server"
 readme = "README.md"
@@ -20,9 +20,9 @@ gui = ["nicegui>=1.4.0"]
 cli = ["click>=8.0.0"]
 
 [project.scripts]
-mistral-ocr-mcp = "mistral_ocr_mcp.mistral_mcp_server:main_sync"
-mistral-ocr-cli = "mistral_ocr_mcp.mistral_cl:main"
-mistral-ocr-gui = "mistral_ocr_mcp.mistral_gui:main"
+mistral-pdf-ocr = "mistral_ocr_mcp.mistral_mcp_server:main_sync"
+mistral-pdf-ocr-cli = "mistral_ocr_mcp.mistral_cl:main"
+mistral-pdf-ocr-gui = "mistral_ocr_mcp.mistral_gui:main"
 
 [tool.hatch.metadata]
 allow-direct-references = true
