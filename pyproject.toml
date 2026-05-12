@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "mcp>=1.0.0",
-    "mistralai>=1.0.0",
+    "mistralai @ git+https://github.com/mistralai/client-python.git",
     "PyPDF2>=3.0.0",
     "python-dotenv>=1.0.0"
 ]
@@ -23,3 +23,6 @@ cli = ["click>=8.0.0"]
 mistral-ocr-mcp = "mistral_ocr_mcp.mistral_mcp_server:main_sync"
 mistral-ocr-cli = "mistral_ocr_mcp.mistral_cl:main"
 mistral-ocr-gui = "mistral_ocr_mcp.mistral_gui:main"
+
+[tool.hatch.metadata]
+allow-direct-references = true
