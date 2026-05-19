@@ -20,7 +20,9 @@ async def test_mcp_tools():
 
     # Import server
     try:
-        from mistral_mcp_server import app, list_tools, call_tool
+        from mistral_mcp_server import mcp
+        list_tools = mcp.list_tools
+        call_tool = mcp.call_tool
         print("✅ MCP server imported successfully\n")
     except Exception as e:
         print(f"❌ Error importing server: {e}")
@@ -50,6 +52,8 @@ async def test_mcp_tools():
                 name="get_pdf_info",
                 arguments={"pdf_paths": [str(sample_pdf.absolute())]}
             )
+            if isinstance(result, tuple):
+                result = result[0]
             print(f"✅ Result:")
             for content in result:
                 print(content.text)
@@ -67,6 +71,8 @@ async def test_mcp_tools():
             name="list_mistral_files",
             arguments={}
         )
+        if isinstance(result, tuple):
+            result = result[0]
         print(f"✅ Result:")
         for content in result:
             print(content.text)
@@ -87,6 +93,8 @@ async def test_mcp_tools():
     #                 "save_images": False  # Text only for quick test
     #             }
     #         )
+    #         if isinstance(result, tuple):
+    #             result = result[0]
     #         print(f"✅ Result:")
     #         for content in result:
     #             print(content.text)
@@ -107,9 +115,9 @@ async def test_tool_schemas():
     print("\n🔍 Validating tool schemas...")
     print("-" * 60)
 
-    from mistral_mcp_server import list_tools
+    from mistral_mcp_server import mcp
 
-    tools = await list_tools()
+    tools = await mcp.list_tools()
 
     for tool in tools:
         print(f"\n📝 {tool.name}")
