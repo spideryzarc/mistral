@@ -18,6 +18,7 @@ import mcp.server.stdio
 # Import functionalities from core module
 from mistral_pdf_ocr.mistral_core import (
     process_single_pdf,
+    process_pdf_pages,
     get_pdf_page_count,
     get_decision_info,
     list_mistral_files,
@@ -57,6 +58,42 @@ async def list_tools() -> list[Tool]:
                     }
                 },
                 "required": ["pdf_path"]
+            }
+        ),
+        Tool(
+            name="process_pdf_pages",
+            description=(
+                "Extracts a range of pages from a PDF and processes them using Mistral AI OCR. "
+                "Takes start_page and end_page (1-indexed, inclusive). "
+                "Extracts text and optionally images, saving as Markdown. "
+                "Returns path to .md file and extracted image count."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "pdf_path": {
+                        "type": "string",
+                        "description": "Full path to the PDF file to process"
+                    },
+                    "start_page": {
+                        "type": "integer",
+                        "description": "The first page to extract (1-indexed, inclusive)"
+                    },
+                    "end_page": {
+                        "type": "integer",
+                        "description": "The last page to extract (1-indexed, inclusive)"
+                    },
+                    "output_path": {
+                        "type": "string",
+                        "description": "Path to save the markdown file (optional, uses PDF name with page range if omitted)"
+                    },
+                    "save_images": {
+                        "type": "boolean",
+                        "description": "If True, extracts and saves images from PDF. If False, text only (default: True)",
+                        "default": True
+                    }
+                },
+                "required": ["pdf_path", "start_page", "end_page"]
             }
         ),
         Tool(
@@ -197,6 +234,51 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return [TextContent(
                 type="text",
                 text=f"Error processing PDF: {message}"
+            )]
+
+    elif name == "process_pdf_pages":
+        pdf_path = arguments["pdf_path"]
+        start_page = int(arguments["start_page"])
+        end_page = int(arguments["end_page"])
+        save_images = arguments.get("save_images", True)
+
+        # Define output path
+        if "output_path" in arguments:
+            md_path = arguments["output_path"]
+        else:
+            md_path = os.path.splitext(pdf_path)[0] + f"_pages_{start_page}_{end_page}.md"
+
+        # Validate file exists
+        if not os.path.exists(pdf_path):
+            return [TextContent(
+                type="text",
+                text=f"Error: File not found: {pdf_path}"
+            )]
+
+        # Process the PDF pages
+        success, message, images_count = process_pdf_pages(
+            pdf_path, md_path, start_page, end_page, save_images=save_images
+        )
+
+        if success:
+            # Read generated markdown content
+            with open(md_path, "r", encoding="utf-8") as f:
+                markdown_content = f.read()
+
+            return [
+                TextContent(
+                    type="text",
+                    text=f"PDF pages {start_page} to {end_page} processed successfully!\n\n"
+                         f"File: {os.path.basename(pdf_path)}\n"
+                         f"Markdown: {md_path}\n"
+                         f"Images extracted: {images_count}\n\n"
+                         f"Content preview:\n{markdown_content[:500]}..."
+                )
+            ]
+        else:
+            return [TextContent(
+                type="text",
+                text=f"Error processing PDF pages: {message}"
             )]
 
     elif name == "process_directory":

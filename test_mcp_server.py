@@ -146,6 +146,44 @@ async def test_tool_schemas():
     print("\n" + "=" * 60)
 
 
+def test_pdf_page_extraction():
+    """Unit test for PDF page range validation and extraction error handling."""
+    print("🧪 Test 5: PDF page range validation")
+    print("-" * 60)
+
+    from mistral_core import process_pdf_pages
+    sample_pdf = Path("sample/sample.pdf")
+
+    if sample_pdf.exists():
+        # Test 1: Invalid page range (start > total)
+        success, message, count = process_pdf_pages(
+            pdf_path=str(sample_pdf.absolute()),
+            md_path="dummy.md",
+            start_page=5,
+            end_page=10,
+            save_images=False
+        )
+        if not success and "exceeds total pages" in message:
+            print("✅ Successfully caught out of bounds page range")
+        else:
+            print(f"❌ Failed out of bounds test: {message}")
+
+        # Test 2: Invalid page range (end < start)
+        success, message, count = process_pdf_pages(
+            pdf_path=str(sample_pdf.absolute()),
+            md_path="dummy.md",
+            start_page=3,
+            end_page=2,
+            save_images=False
+        )
+        if not success and "less than start page" in message:
+            print("✅ Successfully caught invalid interval (end < start)")
+        else:
+            print(f"❌ Failed invalid interval test: {message}")
+    else:
+        print("⚠️ sample.pdf not found, skipping unit test")
+
+
 def main():
     """Main function."""
     print("\n" + "=" * 60)
@@ -155,6 +193,7 @@ def main():
     # Run tests
     asyncio.run(test_mcp_tools())
     asyncio.run(test_tool_schemas())
+    test_pdf_page_extraction()
 
     print("\n🎉 All validation tests completed!\n")
 

@@ -212,6 +212,70 @@ def process_single_pdf(pdf_path, md_path, save_images=True):
                 print(
                     f"   Warning: Could not remove file from Mistral: {delete_error}")
 
+def process_pdf_pages(pdf_path, md_path, start_page, end_page, save_images=True):
+    """
+    Extracts a range of pages from a PDF, performs OCR on that range, and deletes the temporary range file.
+
+    Args:
+        pdf_path (str): Path to PDF file
+        md_path (str): Path where to save the markdown file
+        start_page (int): First page to extract (1-indexed, inclusive)
+        end_page (int): Last page to extract (1-indexed, inclusive)
+        save_images (bool): If True, saves extracted images. If False, ignores images.
+
+    Returns:
+        tuple: (success: bool, message: str, images_count: int)
+    """
+    # 1. Validate page range
+    total_pages = get_pdf_page_count(pdf_path)
+    if total_pages == 0:
+        return False, f"Error: Unable to read PDF {pdf_path} or PDF has 0 pages.", 0
+
+    if start_page < 1:
+        return False, f"Error: Invalid start page {start_page}. Must be >= 1.", 0
+
+    if end_page < start_page:
+        return False, f"Error: End page {end_page} is less than start page {start_page}.", 0
+
+    if start_page > total_pages:
+        return False, f"Error: Start page {start_page} exceeds total pages ({total_pages}).", 0
+
+    # Adjust end_page if it exceeds total pages
+    actual_end_page = min(end_page, total_pages)
+
+    # 2. Extract pages into a temporary PDF
+    temp_pdf_path = os.path.splitext(pdf_path)[0] + f"_temp_pages_{start_page}_{actual_end_page}.pdf"
+    print(f"   Extracting pages {start_page} to {actual_end_page} from {os.path.basename(pdf_path)}...")
+
+    try:
+        reader = PyPDF2.PdfReader(pdf_path)
+        writer = PyPDF2.PdfWriter()
+
+        # 1-indexed to 0-indexed conversion
+        for page_num in range(start_page - 1, actual_end_page):
+            writer.add_page(reader.pages[page_num])
+
+        with open(temp_pdf_path, "wb") as f:
+            writer.write(f)
+
+        # 3. Call process_single_pdf on the temporary PDF
+        success, message, images_count = process_single_pdf(
+            temp_pdf_path, md_path, save_images=save_images
+        )
+        return success, message, images_count
+
+    except Exception as e:
+        return False, f"Error extracting pages: {str(e)}", 0
+
+    finally:
+        # Clean up temp file
+        if os.path.exists(temp_pdf_path):
+            try:
+                os.remove(temp_pdf_path)
+                print(f"   Temporary pages PDF deleted: {os.path.basename(temp_pdf_path)}")
+            except Exception as delete_error:
+                print(f"   Warning: Could not remove temporary PDF {temp_pdf_path}: {delete_error}")
+
 
 def get_decision_info(pdf_paths):
     """
