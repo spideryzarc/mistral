@@ -9,7 +9,8 @@ description = "Mistral PDF OCR MCP Server"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "mcp>=1.0.0",
+    "fastmcp>=0.1.0",
+    "uvicorn>=0.20.0",
     "mistralai @ git+https://github.com/mistralai/client-python.git",
     "PyPDF2>=3.0.0",
     "python-dotenv>=1.0.0"

@@ -10,7 +10,7 @@ import os
 import glob
 from pathlib import Path
 from typing import List, Optional
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 
 # Import functionalities from core module with alias to avoid naming conflicts
 from mistral_pdf_ocr import mistral_core as core
